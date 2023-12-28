@@ -1,0 +1,116 @@
+﻿@{
+    VisualNovel vn = ViewBag.Vn;
+    ViewData["Title"] = vn.Title;
+}
+
+<div class="text-center">
+    <h1 class="display-4">@vn.Title</h1>
+</div>
+
+
+
+<div class="text-center">
+    <div class="row py-4">
+        <div class="col-4">
+            @if (vn.CoverImage != null)
+            {
+                string strByte = Convert.ToBase64String(vn.CoverImage);
+                <img src="data:image/jpg;base64,@strByte" class="w-100">
+            }
+            else
+            {
+                <img src="images/thumbnail.png" class="w-100">
+            }
+        </div>
+        <div class="col">
+            <p>Название: @vn.Title</p>
+            <p>Оригинальное название: @vn.OriginalTitle</p>
+            @* <p>Рейтинг: @vn.Rating/5</p> TODO *@
+            <p>Время чтения: 
+                @{
+                    string readingTime = "";
+                    switch (vn.ReadingTime)
+                    {
+                        case ReadingTime.LessTwoHours:
+                            readingTime = "Меньше 2 часов";
+                            break;
+                        case ReadingTime.TwoToTenHours:
+                            readingTime = "От 2 до 10 часов";
+                            break;
+                        case ReadingTime.TenToThirtyHours:
+                            readingTime = "От 10 до 30 часов";
+                            break;
+                        case ReadingTime.ThirtyToFiftyHours:
+                            readingTime = "От 30 до 50 часов";
+                            break;
+                        case ReadingTime.OverFiftyHours:
+                            readingTime = "Больше 50 часов";
+                            break;
+                    }
+                }
+                @readingTime
+            </p>
+            <p>Переводчик: @vn.Translator</p>
+            <p>Автор: @vn.Autor</p>
+            <p>Год выпуска: @vn.ReleaseYear</p>
+            <p>Добавил: @vn.AddedUserName</p>
+            <p>Языки: 
+                @{
+                    foreach (Language lang in vn.Languages)
+                    {
+                        @Html.ActionLink(@lang.Name , "FiltredBy", "Novel", new { id = lang.Id, filterName = "language", message = $"Визуальные новеллы на языке: {lang.Name}"});
+                    }
+                }
+            </p>
+            <p>
+                Платформы:
+                @{
+                    foreach (GamingPlatform gp in vn.Platforms)
+                    {
+                        @Html.ActionLink(@gp.Name, "FiltredBy", "Novel", new { id = gp.Id, filterName = "platform", message = $"Визуальные новеллы на: {gp.Name}" })
+                        ;
+                    }
+                }
+            </p>
+            <p>
+                Жанры:
+                @{
+                    foreach (Genre genre in vn.Genres)
+                    {
+                        @Html.ActionLink(@genre.Name , "FiltredBy", "Novel", new { id = genre.Id, filterName = "genre", message = $"Визуальные новеллы с жанром: {genre.Name}" });
+                    }
+                }
+            </p>
+            <p>
+                Теги:
+                @{
+                    foreach (TagMetadata tag in vn.Tags)
+                    {
+                        switch (tag.SpoilerLevel)
+                        {
+                            case SpoilerLevel.None:
+                                @Html.ActionLink(@tag.Tag.Name, "FiltredBy", "Novel", new { id = tag.Tag.Id, filterName = "tag", message = $"Визуальные новеллы с тегом: {tag.Tag.Name}" })
+                                ;
+                                break;
+                            case SpoilerLevel.Minor:
+                                @Html.ActionLink(@tag.Tag.Name + "<sup>S</sup>", "FiltredBy", "Novel", new { id = tag.Tag.Id, filterName = "tag", message = $"Визуальные новеллы с тегом: {tag.Tag.Name}" })
+                                ;
+                                break;
+                            case SpoilerLevel.Major:
+                                @Html.ActionLink(@tag.Tag.Name + "<sup style='color: red'>S</sup>", "FiltredBy", "Novel", new { id = tag.Tag.Id, filterName = "tag", message = $"Визуальные новеллы с тегом: {tag.Tag.Name}" })
+                                ;
+                                break;
+                            default:
+                                break;
+                        }
+                    }
+                }
+            </p>
+            <p>Дата добавления: @vn.DateAdded</p>
+            <p>Дата обновления: @vn.DateUpdated</p>
+            <p>Описание: @vn.Description</p>
+        </div>
+       
+    </div>
+</div>
+

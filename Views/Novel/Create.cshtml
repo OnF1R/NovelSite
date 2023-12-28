@@ -1,0 +1,204 @@
+﻿@{
+    ViewData["Title"] = "Home Page";
+}
+
+<div class="text-center">
+    <h1 class="display-4">Добавить визуальную новеллу</h1>
+</div>
+
+
+<div class="text-center">
+
+    @model VisualNovelRequest
+    <form id="visualNovelAddForm" method="post" asp-action="Create" enctype="multipart/form-data">
+        <div class="mb-3">
+            <label for="visualNovelName" class="form-label">Название визуальной новеллы</label>
+            <input id="visualNovelName" asp-for="Title" type="text" name="Title" class="form-control" required>
+            @* <div id="emailHelp" class="form-text">We'll never share your email with anyone else.</div> *@
+        </div>
+        <div class="mb-3">
+            <label for="visualNovelOriginalName" class="form-label">Оригинальное название визуальной новеллы</label>
+            <input id="visualNovelOriginalName" asp-for="OriginalTitle" type="text" name="OriginalTitle" class="form-control" required>
+        </div>
+        <div class="mb-3">
+            <label for="visualNovelAuthor" class="form-label">Автор визуальной новеллы</label>
+            <input id="visualNovelAuthor" asp-for="Autor" type="text" name="Autor" class="form-control" required>
+        </div>
+        <div class="mb-3">
+            <label for="visualNovelTranslator" class="form-label">Переводчик визуальной новеллы</label>
+            <input id="visualNovelTranslator" asp-for="Translator" type="text" name="Translator" class="form-control" required>
+        </div>
+        <div class="mb-3">
+            <label for="visualNovelReadingTimeSelect" class="form-label">Время прохождения визуальной новеллы</label>
+            <select asp-for="ReadingTime" class="form-select" name="ReadingTime" aria-label="visualNovelReadingTimeSelect" required>
+                <option value="0">Меньше 2 часов</option>
+                <option value="1">От 2 до 10 часов</option>
+                <option value="2">От 10 до 30 часов</option>
+                <option value="3">От 30 до 50 часов</option>
+                <option value="4">Больше 50 часов</option>
+            </select>
+        </div>
+
+        <div class="mb-3">
+            <label for="visualNovelReleaseYear" class="form-label">Год выхода визуальной новеллы</label>
+            <input id="visualNovelReleaseYear" asp-for="ReleaseYear" type="number" name="ReleaseYear" class="form-control" required>
+        </div>
+
+        @*<div class="mb-3">
+        <label for="visualNovelAddedUserId" class="form-label">Кто добавил визуальнуй новеллу</label>
+        <input type="text" class="form-control" id="visualNovelAddedUserNameInput">
+        </div> *@
+
+        <div class="mb-3">
+            <label for="visualNovelAddedUserName" class="form-label">Кто добавил визуальнуй новеллу</label>
+            <input id="visualNovelAddedUserName" asp-for="AddedUserName" type="text" name="AddedUserName" class="form-control" required>
+        </div>
+
+        <div class="mb-3">
+            <label for="visualNovelCoverImage" class="form-label">Обложка визуальной новеллы</label>
+            <input id="visualNovelCoverImage" asp-for="CoverImage" type="file" name="CoverImage" accept="image/png, image/jpeg" class="form-control" aria-describedby="coverImageHelp" required>
+            <div id="coverImageHelp" class="form-text">
+                Ваше изображение должно быть подходящего формата (jpeg, png, bmp или gif) и иметь размер не превышающий 3МБ.
+            </div>
+            <img id="previewCoverImage" class="img-fluid" src="#" alt="" height="auto" width="25%" hidden>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label" for="visualNovelDescription">Описание визуальной новеллы</label>
+            <textarea asp-for="Description" name="Description" class="form-control" id="visualNovelDescription" rows="4" required></textarea>
+        </div>
+
+        <div class="mb-3">
+            <label id="tagsSelector" for="visualNovelNoneSpoilerTagsSelect" class="form-label">Теги визуальной новеллы без спойлеров</label>
+            <select asp-for="NoneSpoilerTags" class="form-select js-example-basic-multiple tags-selector" name="NoneSpoilerTags" aria-label="visualNovelNoneSpoilerTagsSelect" multiple required>
+                @{
+                    foreach (Tag tag in ViewBag.Tags)
+                    {
+                        <option value="@tag.Id">@tag.Name</option>
+                    }
+                }
+            </select>
+        </div>
+
+        <div class="mb-3">
+            <label id="tagsSelector" for="visualNovelMinorSpoilerTagsSelect" class="form-label">Теги визуальной новеллы с незначительными спойлерами</label>
+            <select asp-for="MinorSpoilerTags" class="form-select js-example-basic-multiple tags-selector" name="MinorSpoilerTags" aria-label="visualNovelMinorSpoilerTagsSelect" multiple required>
+            </select>
+        </div>
+
+        <div class="mb-3">
+            <label id="tagsSelector" for="visualNovelMajorSpoilerTagsSelect" class="form-label">Теги визуальной новеллы с значительными спойлерами</label>
+            <select asp-for="MajorSpoilerTags" class="form-select js-example-basic-multiple tags-selector" name="MajorSpoilerTags" aria-label="visualNovelMajorSpoilerTagsSelect" multiple required>
+            </select>
+        </div>
+
+        <div class="mb-3">
+            <label for="visualNovelGenresSelect" class="form-label">Жанры визуальной новеллы</label>
+            <select asp-for="Genres" class="form-select js-example-basic-multiple" name="Genres" aria-label="visualNovelGenresSelect" multiple required>
+                @{
+                    foreach (Genre genre in ViewBag.Genres)
+                    {
+                        <option value="@genre.Id">@genre.Name</option>
+                    }
+                }
+            </select>
+        </div>
+
+        <div class="mb-3">
+            <label for="visualNovelLanguagesSelect" class="form-label">Языки визуальной новеллы</label>
+            <select asp-for="Languages" class="form-select js-example-basic-multiple" name="Languages" aria-label="visualNovelLanguagesSelect" multiple required>
+                @{
+                    foreach (Language lang in ViewBag.Languages)
+                    {
+                        <option value="@lang.Id">@lang.Name</option>
+                    }
+                }
+            </select>
+        </div>
+
+        <div class="mb-3">
+            <label for="visualNovelGamingPlatformsSelect" class="form-label">Игровые платформы визуальной новеллы</label>
+            <select asp-for="Platforms" class="form-select js-example-basic-multiple" name="Platforms" aria-label="visualNovelGamingPlatformsSelect" multiple required>
+                @{
+                    foreach (GamingPlatform gp in ViewBag.Platforms)
+                    {
+                        <option value="@gp.Id">@gp.Name</option>
+                    }
+                }
+            </select>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Submit</button>
+    </form>
+
+    <script>
+        window.addEventListener('load', function () {
+            document.querySelector('input[type="file"]').addEventListener('change', function () {
+                if (this.files && this.files[0]) {
+                    var img = document.querySelector('img');
+                    img.onload = () => {
+                        URL.revokeObjectURL(img.src);  // no longer needed, free memory
+                    }
+
+                    img.src = URL.createObjectURL(this.files[0]); // set src to blob url
+                    img.hidden = false;
+                }
+            });
+        });
+
+        // document.getElementById("visualNovelAddForm").addEventListener("submit", function (e) {
+        //     e.preventDefault();
+
+        //     var formData = new FormData(document.getElementById("visualNovelAddForm"));
+        //     output as an object
+        //     console.log(Object.fromEntries(formData));
+
+        //     ...or iterate through the name-value pairs
+        //     for (var pair of formData.entries()) {
+        //         console.log(pair[0] + ": " + pair[1]);
+        //     }
+        // });
+
+        $(document).ready(function () {
+            $('.js-example-basic-multiple').select2();
+        });
+
+        var $select2 = $(".tags-selector");
+
+        // Copy the options to all selects based on the first one
+        $(".tags-selector").html($select2.first().html());
+
+        // Initialize Select2
+        $select2.select2({
+            allowClear: true,
+            placeholder: "Select an option",
+            tags: true
+        });
+
+        $('.js-example-basic-multiple').select2();
+
+        $('.tags-selector').on('select2:select', function (e) {
+            var selectedValue = e.params.data.id;
+
+            // Отключение выбранной опции во всех селектах
+            $('.tags-selector').not(this).find('option[value="' + selectedValue + '"]').prop('disabled', true);
+
+            // Обновление Select2 после изменений
+            $('.tags-selector').not(this).trigger('change');
+        });
+
+        // Обработка снятия выбора в любом из селектов
+        $('.tags-selector').on('select2:unselect', function (e) {
+            var unselectedValue = e.params.data.id;
+
+            // Включение опции во всех селектах
+            $('.tags-selector').not(this).find('option[value="' + unselectedValue + '"]').prop('disabled', false);
+
+            // Обновление Select2 после изменений
+            $('.tags-selector').not(this).trigger('change');
+        });
+
+
+    </script>
+</div>
+
