@@ -1,0 +1,521 @@
+﻿@using System.Drawing;
+
+@{
+    VisualNovel vn = ViewBag.Vn;
+    ViewData["Title"] = $"Edit {vn.Title}";
+}
+
+<div class="text-center">
+    <h1 class="display-4">Редактирование визуальной новеллы @vn.Title</h1>
+</div>
+
+
+<div class="text-center">
+
+    @model VisualNovelRequest
+    <form id="visualNovelEditForm" method="post" asp-action="Edit" enctype="multipart/form-data">
+        <div class="mb-3">
+            <label for="visualNovelName" class="form-label">Название визуальной новеллы</label>
+            <input id="visualNovelName" asp-for="Title" type="text" name="Title" class="form-control" required value="@vn.Title">
+            @* <div id="emailHelp" class="form-text">We'll never share your email with anyone else.</div> *@
+        </div>
+        <div class="mb-3">
+            <label for="visualNovelOriginalName" class="form-label">Оригинальное название визуальной новеллы</label>
+            <input id="visualNovelOriginalName" asp-for="OriginalTitle" type="text" name="OriginalTitle" class="form-control" value="@vn.OriginalTitle">
+            <div id="visualNovelOriginalNameHelp" class="form-text">
+                Если название визуальной новеллы изначально оригинальное или не имеет логического перевода, например "VA-11 HALL-A", оставлять пустым.
+            </div>
+        </div>
+        <div class="mb-3">
+            <label for="visualNovelVndbId" class="form-label">Идентификатор новеллы на VNDB</label>
+            <input id="visualNovelVndbId" asp-for="VndbId" type="text" name="VndbId" class="form-control" value="@vn.VndbId" required>
+            <div id="visualNovelVndbIdHelp" class="form-text">
+                Идентификатор находится в конце ссылки на страницу новеллы (https://vndb.org/v97), в данном примере идентификатором будет "v97", оставлять пустым если визуальной новеллы нет на vndb.
+            </div>
+        </div>
+        <div class="mb-3">
+            <label for="visualNovelAuthor" class="form-label">Автор/Авторы визуальной новеллы</label>
+            <select asp-for="Authors" id="existedAuthorSelect" name="Authors" class="form-select js-example-basic-multiple" multiple required aria-label="Visual novel author select">
+                @foreach (Author author in ViewBag.Authors)
+                {
+                    if (vn.Author.Where(a => a.Id == author.Id).Count() == 1)
+                    {
+                        <option selected value="@author.Id">@author.Name</option>
+                    }
+                    else
+                    {
+                        <option value="@author.Id">@author.Name</option>
+                    }
+                }
+            </select>
+        </div>
+
+        <div class="mb-3">
+            <label for="visualNovelTranslator" class="form-label">Переводчик визуальной новеллы</label>
+            <select asp-for="Translator" id="existedTranslatorSelect" class="form-select js-example-basic-single" aria-label="Visual novel translator select">
+                <option value="@null">Нет переводчика</option>
+                @foreach (Translator translator in ViewBag.Translators)
+                {
+                    if (vn.Translator != null && vn.Translator.Id == translator.Id)
+                    {
+                        <option selected value="@translator.Id">@translator.Name</option>
+                    }
+                    else
+                    {
+                        <option value="@translator.Id">@translator.Name</option>
+                    }
+                }
+            </select>
+        </div>
+        <div class="mb-3">
+            <label for="visualNovelStatusSelect" class="form-label">Статус визуальной новеллы</label>
+            <select asp-for="Status" class="form-select" name="Status" aria-label="visualNovelStatusSelect" required>
+                @{
+                    if (@vn.Status == @Status.Release)
+                    {
+                        <option selected value="0">Релиз</option>
+                    }
+                    else
+                    {
+                        <option value="0">Релиз</option>
+                    }
+                    if (@vn.Status == @Status.InDevelopment)
+                    {
+                        <option selected value="1">В разработке</option>
+                    }
+                    else
+                    {
+                        <option value="1">В разработке</option>
+                    }
+                    if (@vn.Status == @Status.Abandoned)
+                    {
+                        <option selected value="2">Заброшено</option>
+                    }
+                    else
+                    {
+                        <option value="2">Заброшено</option>
+                    }
+                    if (@vn.Status == @Status.Announced)
+                    {
+                        <option selected value="3">Анонс</option>
+                    }
+                    else
+                    {
+                        <option value="3">Анонс</option>
+                    }
+                }
+            </select>
+        </div>
+        <div class="mb-3">
+            <label for="visualNovelReadingTimeSelect" class="form-label">Время прохождения визуальной новеллы</label>
+            <select asp-for="ReadingTime" class="form-select" name="ReadingTime" aria-label="visualNovelReadingTimeSelect" required>
+                @{
+                    if (@vn.ReadingTime == @ReadingTime.LessTwoHours)
+                    {
+                            <option selected value="0">Меньше 2 часов</option>
+                    }
+                    else
+                    {
+                            <option value="1">Меньше 2 часов</option>
+                    }
+                    if (@vn.ReadingTime == @ReadingTime.TwoToTenHours)
+                    {
+                            <option selected value="1">От 2 до 10 часов</option>
+                    }
+                    else
+                    {
+                            <option value="2">От 2 до 10 часов</option>
+                    }
+                    if (@vn.ReadingTime == @ReadingTime.TenToThirtyHours)
+                    {
+                            <option selected value="2">От 10 до 30 часов</option>
+                    }
+                    else
+                    {
+                            <option value="3">От 10 до 30 часов</option>
+                    }
+                    if (@vn.ReadingTime == @ReadingTime.ThirtyToFiftyHours)
+                    {
+                            <option selected value="3">От 30 до 50 часов</option>
+                    }
+                    else
+                    {
+                            <option value="4">От 30 до 50 часов</option>
+                    }
+                    if (@vn.ReadingTime == @ReadingTime.OverFiftyHours)
+                    {
+                            <option selected value="4">Больше 50 часов</option>
+                    }
+                    else
+                    {
+                            <option value="5">Больше 50 часов</option>
+                    }
+                }
+            </select>
+        </div>
+
+        <div class="mb-3">
+            <label for="visualNovelReleaseYear" class="form-label">Год выхода визуальной новеллы</label>
+            <input id="visualNovelReleaseYear" asp-for="ReleaseYear" type="number" name="ReleaseYear" class="form-control" required value="@vn.ReleaseYear">
+        </div>
+
+        <div class="mb-3">
+            <label for="visualNovelAddedUserName" class="form-label">Кто добавил визуальнуй новеллу</label>
+            <input id="visualNovelAddedUserName" asp-for="AddedUserName" type="text" name="AddedUserName" class="form-control" required value="@vn.AddedUserName">
+        </div>
+
+        @* TODO Images *@
+
+        <div class="mb-3">
+            <label class="form-label" for="visualNovelSteamLink">Ссылка на визуальную новеллу в Steam</label>
+            <input asp-for="SteamLink" value="@vn.SteamLink" name="SteamLink" class="form-control" id="visualNovelSteamLink">
+            <div id="visualNovelSteamLinkHelp" class="form-text">
+                Ссылка на страницу товара в Steam, если нет оставлять пустым.
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label" for="visualNovelTranslateLinkForSteam">Ссылка на русификатор для Steam</label>
+            <input asp-for="TranslateLinkForSteam" value="@vn.TranslateLinkForSteam" name="TranslateLinkForSteam" class="form-control" id="visualNovelTranslateLinkForSteam">
+            <div id="visualNovelTranslateLinkForSteamHelp" class="form-text">
+                Ссылка на руководство о русификации игры в Steam, если нет оставлять пустым.
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label" for="visualNovelDescription">Описание визуальной новеллы</label>
+            <textarea id="@Html.IdFor(m => m.Description)" name="@Html.NameFor(m => m.Description)" class="form-control" id="visualNovelDescription" rows="4" required>@vn.Description</textarea>
+        </div>
+
+        <div class="mb-3">
+            <label id="tagsSelector" for="visualNovelNoneSpoilerTagsSelect" class="form-label">Теги визуальной новеллы без спойлеров</label>
+            <select asp-for="NoneSpoilerTags" class="form-select js-example-basic-multiple tags-selector" name="NoneSpoilerTags" aria-label="visualNovelNoneSpoilerTagsSelect" multiple required>
+                @{
+                    foreach (Tag tag in ViewBag.Tags)
+                    {
+                        if (vn.Tags.Where(t => t.Tag.Id == tag.Id && t.SpoilerLevel == SpoilerLevel.None).Count() == 1)
+                        {
+                                <option selected value="@tag.Id">@tag.Name</option>
+                        }
+                        else
+                        {
+                                <option value="@tag.Id">@tag.Name</option>
+                        }
+                    }
+                }
+            </select>
+        </div>
+
+        <div class="mb-3">
+            <label id="tagsSelector" for="visualNovelMinorSpoilerTagsSelect" class="form-label">Теги визуальной новеллы с незначительными спойлерами</label>
+            <select asp-for="MinorSpoilerTags" class="form-select js-example-basic-multiple tags-selector" name="MinorSpoilerTags" aria-label="visualNovelMinorSpoilerTagsSelect" multiple>
+                @{
+                    foreach (Tag tag in ViewBag.Tags)
+                    {
+                        if (vn.Tags.Where(t => t.Tag.Id == tag.Id && t.SpoilerLevel == SpoilerLevel.Minor).Count() == 1)
+                        {
+                                <option selected value="@tag.Id">@tag.Name</option>
+                        }
+                        else
+                        {
+                                <option value="@tag.Id">@tag.Name</option>
+                        }
+                    }
+                }
+            </select>
+        </div>
+
+        <div class="mb-3">
+            <label id="tagsSelector" for="visualNovelMajorSpoilerTagsSelect" class="form-label">Теги визуальной новеллы с значительными спойлерами</label>
+            <select asp-for="MajorSpoilerTags" class="form-select js-example-basic-multiple tags-selector" name="MajorSpoilerTags" aria-label="visualNovelMajorSpoilerTagsSelect" multiple>
+                @{
+                    foreach (Tag tag in ViewBag.Tags)
+                    {
+                        if (vn.Tags.Where(t => t.Tag.Id == tag.Id && t.SpoilerLevel == SpoilerLevel.Major).Count() == 1)
+                        {
+                                <option selected value="@tag.Id">@tag.Name</option>
+                        }
+                        else
+                        {
+                                <option value="@tag.Id">@tag.Name</option>
+                        }
+                    }
+                }
+            </select>
+        </div>
+
+        <div class="mb-3">
+            <label for="visualNovelGenresSelect" class="form-label">Жанры визуальной новеллы</label>
+            <select asp-for="Genres" class="form-select js-example-basic-multiple" name="Genres" aria-label="visualNovelGenresSelect" multiple required>
+                @{
+                    foreach (Genre genre in ViewBag.Genres)
+                    {
+                        if (vn.Genres.Where(g => g.Id == genre.Id).Count() == 1)
+                        {
+                                <option selected value="@genre.Id">@genre.Name</option>
+                        }
+                        else
+                        {
+                                <option value="@genre.Id">@genre.Name</option>
+                        }
+                    }
+                }
+            </select>
+        </div>
+
+        <div class="mb-3">
+            <label for="visualNovelLanguagesSelect" class="form-label">Языки визуальной новеллы</label>
+            <select asp-for="Languages" class="form-select js-example-basic-multiple" name="Languages" aria-label="visualNovelLanguagesSelect" multiple required>
+                @{
+                    foreach (Language lang in ViewBag.Languages)
+                    {
+                        if (vn.Languages.Where(l => l.Id == lang.Id).Count() == 1)
+                        {
+                                <option selected value="@lang.Id">@lang.Name</option>
+                        }
+                        else
+                        {
+                                <option value="@lang.Id">@lang.Name</option>
+                        }
+                    }
+                }
+            </select>
+        </div>
+
+        <div class="mb-3">
+            <label for="visualNovelGamingPlatformsSelect" class="form-label">Игровые платформы визуальной новеллы</label>
+            <select asp-for="Platforms" class="form-select js-example-basic-multiple gamingPlatform-selector" name="Platforms" aria-label="visualNovelGamingPlatformsSelect" multiple required>
+                @{
+                    foreach (GamingPlatform gp in ViewBag.Platforms)
+                    {
+                        if (vn.Platforms.Where(g => g.Id == gp.Id).Count() == 1)
+                        {
+                                <option selected value="@gp.Id">@gp.Name</option>
+                        }
+                        else
+                        {
+                                <option value="@gp.Id">@gp.Name</option>
+                        }
+                    }
+                }
+            </select>
+        </div>
+
+        <div id="gamingPlatformInputs" class="mb-3">
+            @if (vn.Links != null)
+            {
+                foreach (var link in vn.Links)
+                {
+                    <div id="inputGamingPlatformLinks-@link.GamingPlatform.Id" class="mb-3">
+                        <label class="form-label" for="visualNovelDownloadLinkGamingPlatformId">Ссылка на визуальную новеллу для @link.GamingPlatform.Name</label>
+                        <input hidden value="@link.GamingPlatform.Id" id="visualNovelDownloadLinkGamingPlatformId" asp-for="DownloadLinkGamingPlatformId" name="DownloadLinkGamingPlatformId" class="form-control" required>
+                        <input id="visualNovelDownloadLinkUrl" value="@link.Url" asp-for="DownloadLinkUrl" name="DownloadLinkUrl" class="form-control" required>
+                    </div>
+                }
+            }
+        </div>
+
+        <div id="otherLinksInputs" class="mb-3">
+            @if (vn.OtherLinks != null)
+            {
+                for (int i = 0; i < vn.OtherLinks.Count; i++)
+                {
+                    int currentLinkInputNumber = i + 1;
+                    <div id="inputOtherLink" class="my-3 p-2">
+                        <label class="form-label" for="visualNovelOtherLinkName-@currentLinkInputNumber">Название ссылки</label>
+                        <input value="@vn.OtherLinks[i].Name" id="visualNovelOtherLinkName-@currentLinkInputNumber" asp-for="OtherLinkName" name="OtherLinkName" class="form-control" required>
+                        <div id="visualNovelOtherLinkNameHelp" class="form-text">
+                            Название ссылки, которая будет отображаться на странице новеллы.
+                        </div>
+                        <label for="visualNovelOtherLinkUrl" class="form-label">Ссылка</label>
+                        <input value="@vn.OtherLinks[i].Url" id="visualNovelOtherLinkUrl" asp-for="OtherLinkUrl" name="OtherLinkUrl" class="form-control required">
+                        <div id="visualNovelOtherLinkUrlHelp" class="form-text">
+                            Ссылка на дополнительный источник.
+                        </div>
+                        <button id="removeInputCard" onclick="removeInputContainerOfElement(this)" class="my-2 btn btn-danger">Удалить</button>
+                    </div>
+                }
+            }
+        </div>
+
+        <button id="addOtherLinkInputButton" type="button" onclick="addOtherLinkInput()" class="btn btn-warning mb-3">Добавить дополнительную ссылку</button>
+
+        <button type="submit" class="btn btn-primary mb-3">Отправить изменения</button>
+    </form>
+
+    <script>
+        
+        var otherLinksInputsCount = document.getElementById('otherLinksInputs').querySelectorAll('#inputOtherLink').length;
+
+        function removeInputContainerOfElement(elem) {
+            var container = elem.parentNode;
+            container.parentNode.removeChild(container);
+            otherLinksInputsCount--;
+            checkButtonAccessibility();
+        }
+
+        function checkButtonAccessibility() {
+            if (otherLinksInputsCount >= 8) {
+                var button = document.getElementById('addOtherLinkInputButton');
+
+                button.disabled = true;
+
+                button.textContent = "Максимум дополнительных ссылок"
+            } else {
+                var button = document.getElementById('addOtherLinkInputButton');
+
+                button.disabled = false;
+
+                button.textContent = "Добавить дополнительную ссылку"
+            }
+        }
+
+        function addOtherLinkInput() {
+            if (otherLinksInputsCount < 8) {
+
+                var container = document.getElementById('otherLinksInputs');
+                var inputOtherLinkDiv = document.createElement('div');
+                inputOtherLinkDiv.setAttribute("id", "inputOtherLink");
+                inputOtherLinkDiv.setAttribute("class", "my-3 p-2");
+                var labelOtherLinkName = document.createElement('label');
+                labelOtherLinkName.setAttribute("class", "form-label");
+                labelOtherLinkName.setAttribute("for", "visualNovelOtherLinkName");
+                labelOtherLinkName.textContent = "Название ссылки";
+                inputOtherLinkDiv.appendChild(labelOtherLinkName);
+                var inputOtherLinkName = document.createElement('input');
+                inputOtherLinkName.setAttribute("id", "visualNovelOtherLinkName");
+                inputOtherLinkName.setAttribute("asf-for", "OtherLinkName");
+                inputOtherLinkName.setAttribute("name", "OtherLinkName");
+                inputOtherLinkName.setAttribute("class", "form-control");
+                inputOtherLinkName.setAttribute("required", "true");
+                inputOtherLinkDiv.appendChild(inputOtherLinkName);
+                var otherLinkNameHelp = document.createElement('div');
+                otherLinkNameHelp.setAttribute("id", "visualNovelOtherLinkNameHelp");
+                otherLinkNameHelp.setAttribute("class", "form-text");
+                otherLinkNameHelp.textContent = "Название ссылки, которая будет отображаться на странице новеллы.";
+                inputOtherLinkDiv.appendChild(otherLinkNameHelp);
+
+                var labelOtherLinkUrl = document.createElement('label');
+                labelOtherLinkUrl.setAttribute("class", "form-label");
+                labelOtherLinkUrl.setAttribute("for", "visualNovelOtherLinkUrl");
+                labelOtherLinkUrl.textContent = "Ссылка";
+                inputOtherLinkDiv.appendChild(labelOtherLinkUrl);
+                var inputOtherLinkUrl = document.createElement('input');
+                inputOtherLinkUrl.setAttribute("id", "visualNovelOtherLinkUrl");
+                inputOtherLinkUrl.setAttribute("asf-for", "OtherLinkUrl");
+                inputOtherLinkUrl.setAttribute("name", "OtherLinkUrl");
+                inputOtherLinkUrl.setAttribute("class", "form-control");
+                inputOtherLinkUrl.setAttribute("required", "true");
+                inputOtherLinkDiv.appendChild(inputOtherLinkUrl);
+                var otherLinkUrlHelp = document.createElement('div');
+                otherLinkUrlHelp.setAttribute("id", "visualNovelOtherLinkUrlHelp");
+                otherLinkUrlHelp.setAttribute("class", "form-text");
+                otherLinkUrlHelp.textContent = "Ссылка на дополнительный источник.";
+                inputOtherLinkDiv.appendChild(otherLinkUrlHelp);
+
+                var removeInputCardButton = document.createElement('button');
+                removeInputCardButton.setAttribute("id", "removeInputCard");
+                removeInputCardButton.setAttribute("onclick", "removeInputContainerOfElement(this)");
+                removeInputCardButton.setAttribute("class", "my-2 btn btn-danger");
+                removeInputCardButton.textContent = "Удалить";
+                inputOtherLinkDiv.appendChild(removeInputCardButton);
+
+                container.appendChild(inputOtherLinkDiv);
+
+                otherLinksInputsCount++;
+
+                checkButtonAccessibility();
+
+            }
+        }
+
+        $(document).ready(function () {
+            // Инициализация Select2 для всех селектов
+            $('.js-example-basic-multiple').select2();
+
+            // При загрузке страницы отключаем выбранные опции в других селектах
+            $('.tags-selector').each(function () {
+                var selectedValues = $(this).val();
+                console.log(selectedValues);
+                $('.tags-selector').not(this).find('option').each(function () {
+                    if (selectedValues && selectedValues.indexOf($(this).val()) !== -1) {
+                        $(this).prop('disabled', true);
+                    }
+                });
+            });
+        });
+
+        $('.gamingPlatform-selector').on('select2:select', function (e) {
+            var container = document.getElementById('gamingPlatformInputs');
+            var gamingPlatformId = e.params.data.id;
+            var gamingPlatformName = e.params.data.text;
+            var inputGamingPlatformDiv = document.createElement('div');
+            inputGamingPlatformDiv.setAttribute("class", "mb-3");
+            inputGamingPlatformDiv.setAttribute("id", "inputGamingPlatformLinks-" + gamingPlatformId);
+            var label = document.createElement('label');
+            label.setAttribute("class", "form-label")
+            label.setAttribute("for", "visualNovelDownloadLinkGamingPlatformId")
+            label.textContent = "Ссылка на визуальную новеллу для " + gamingPlatformName;
+            inputGamingPlatformDiv.appendChild(label);
+            var idInput = document.createElement('input');
+            idInput.setAttribute("hidden", "true");
+            idInput.setAttribute("value", gamingPlatformId);
+            idInput.setAttribute("id", "visualNovelDownloadLinkGamingPlatformId");
+            idInput.setAttribute("asp-for", "DownloadLinkGamingPlatformId");
+            idInput.setAttribute("name", "DownloadLinkGamingPlatformId");
+            idInput.setAttribute("class", "form-control");
+            idInput.setAttribute("required", "true");
+            inputGamingPlatformDiv.appendChild(idInput);
+            var urlInput = document.createElement('input');
+            urlInput.setAttribute("id", "visualNovelDownloadLinkUrl");
+            urlInput.setAttribute("asp-for", "DownloadLinkUrl");
+            urlInput.setAttribute("name", "DownloadLinkUrl");
+            urlInput.setAttribute("class", "form-control");
+            urlInput.setAttribute("required", "true");
+            inputGamingPlatformDiv.appendChild(urlInput);
+            container.appendChild(inputGamingPlatformDiv);
+        });
+
+        $('.gamingPlatform-selector').on('select2:unselect', function (e) {
+            var gamingPlatformId = e.params.data.id;
+            var inputElem = document.getElementById('inputGamingPlatformLinks-' + gamingPlatformId);
+            inputElem.parentNode.removeChild(inputElem);
+        });
+
+        var $select2 = $(".tags-selector");
+
+        // Copy the options to all selects based on the first one
+        //$(".tags-selector").html($select2.first().html());
+
+        // Initialize Select2
+        $select2.select2({
+            allowClear: true,
+            placeholder: "Select an option",
+            tags: true
+        });
+
+        //$('.js-example-basic-multiple').select2();
+
+        $('.tags-selector').on('select2:select', function (e) {
+            var selectedValue = e.params.data.id;
+
+            // Отключение выбранной опции во всех селектах
+            $('.tags-selector').not(this).find('option[value="' + selectedValue + '"]').prop('disabled', true);
+
+            // Обновление Select2 после изменений
+            $('.tags-selector').not(this).trigger('change');
+        });
+
+        // Обработка снятия выбора в любом из селектов
+        $('.tags-selector').on('select2:unselect', function (e) {
+            var unselectedValue = e.params.data.id;
+
+            // Включение опции во всех селектах
+            $('.tags-selector').not(this).find('option[value="' + unselectedValue + '"]').prop('disabled', false);
+
+            // Обновление Select2 после изменений
+            $('.tags-selector').not(this).trigger('change');
+        });
+    </script>
+</div>
+

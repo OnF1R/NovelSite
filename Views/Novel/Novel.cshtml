@@ -1,116 +1,487 @@
-﻿@{
+﻿@using Microsoft.AspNetCore.Identity;
+@inject SignInManager<IdentityUser> SignInManager;
+@inject UserManager<IdentityUser> UserManager;
+
+
+@{
     VisualNovel vn = ViewBag.Vn;
     ViewData["Title"] = vn.Title;
+    string fancyappsScript = "https://cdn.jsdelivr.net/npm/@fancyapps/ui@5.0/dist/fancybox/fancybox.umd.js";
+    string fancyappsCss = "https://cdn.jsdelivr.net/npm/@fancyapps/ui@5.0/dist/fancybox/fancybox.css";
 }
 
+<link href="https://cdnjs.cloudflare.com/ajax/libs/fotorama/4.6.4/fotorama.css" rel="stylesheet">
+<link href="@fancyappsCss" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fotorama/4.6.4/fotorama.min.js"></script>
+
+
+<style>
+
+    /* Stretch the links */
+    .fotorama__html div,
+    .fotorama__html a {
+        display: block;
+        height: 100%;
+        background: url(_.gif);
+    }
+</style>
+
+<img class="bg-top" src="@ViewBag.BackgroundImage" />
+
 <div class="text-center">
-    <h1 class="display-4">@vn.Title</h1>
-</div>
+    <div class="card p-2">
+        <div class="row pb-4">
 
-
-
-<div class="text-center">
-    <div class="row py-4">
-        <div class="col-4">
-            @if (vn.CoverImage != null)
-            {
-                string strByte = Convert.ToBase64String(vn.CoverImage);
-                <img src="data:image/jpg;base64,@strByte" class="w-100">
-            }
-            else
-            {
-                <img src="images/thumbnail.png" class="w-100">
-            }
-        </div>
-        <div class="col">
-            <p>Название: @vn.Title</p>
-            <p>Оригинальное название: @vn.OriginalTitle</p>
-            @* <p>Рейтинг: @vn.Rating/5</p> TODO *@
-            <p>Время чтения: 
-                @{
-                    string readingTime = "";
-                    switch (vn.ReadingTime)
-                    {
-                        case ReadingTime.LessTwoHours:
-                            readingTime = "Меньше 2 часов";
-                            break;
-                        case ReadingTime.TwoToTenHours:
-                            readingTime = "От 2 до 10 часов";
-                            break;
-                        case ReadingTime.TenToThirtyHours:
-                            readingTime = "От 10 до 30 часов";
-                            break;
-                        case ReadingTime.ThirtyToFiftyHours:
-                            readingTime = "От 30 до 50 часов";
-                            break;
-                        case ReadingTime.OverFiftyHours:
-                            readingTime = "Больше 50 часов";
-                            break;
-                    }
-                }
-                @readingTime
-            </p>
-            <p>Переводчик: @vn.Translator</p>
-            <p>Автор: @vn.Autor</p>
-            <p>Год выпуска: @vn.ReleaseYear</p>
-            <p>Добавил: @vn.AddedUserName</p>
-            <p>Языки: 
-                @{
-                    foreach (Language lang in vn.Languages)
-                    {
-                        @Html.ActionLink(@lang.Name , "FiltredBy", "Novel", new { id = lang.Id, filterName = "language", message = $"Визуальные новеллы на языке: {lang.Name}"});
-                    }
-                }
-            </p>
-            <p>
-                Платформы:
-                @{
-                    foreach (GamingPlatform gp in vn.Platforms)
-                    {
-                        @Html.ActionLink(@gp.Name, "FiltredBy", "Novel", new { id = gp.Id, filterName = "platform", message = $"Визуальные новеллы на: {gp.Name}" })
-                        ;
-                    }
-                }
-            </p>
-            <p>
-                Жанры:
-                @{
-                    foreach (Genre genre in vn.Genres)
-                    {
-                        @Html.ActionLink(@genre.Name , "FiltredBy", "Novel", new { id = genre.Id, filterName = "genre", message = $"Визуальные новеллы с жанром: {genre.Name}" });
-                    }
-                }
-            </p>
-            <p>
-                Теги:
-                @{
-                    foreach (TagMetadata tag in vn.Tags)
-                    {
-                        switch (tag.SpoilerLevel)
+            <div class="col-lg-4 col-xl-4 col-xxl-4 col-md-4 col-sm-12">
+                @if (@ViewBag.CoverImage != null)
+                {
+                    <div class="position-relative">
+                        <img loading="lazy" src="@ViewBag.CoverImage" class="w-100" />
+                        @if (vn.VndbId != null)
                         {
-                            case SpoilerLevel.None:
-                                @Html.ActionLink(@tag.Tag.Name, "FiltredBy", "Novel", new { id = tag.Tag.Id, filterName = "tag", message = $"Визуальные новеллы с тегом: {tag.Tag.Name}" })
-                                ;
+                            <a href="https://vndb.org/@vn.VndbId"><img loading="lazy" src="~/images/vndbIcon.png" class="position-absolute bottom-0 end-0 translate-middle" /></a>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <img src="images/thumbnail.png" class="w-100">
+                }
+                @if (SignInManager.IsSignedIn(User))
+                {
+                    <div class="dropdown m-2">
+                        <button class="btn btn-secondary dropdown-toggle" type="button" id="VisualNovelListAction" data-bs-toggle="dropdown" aria-expanded="false">
+                            Добавить в список @* TODO if already in list show that *@
+                        </button>
+                        <ul class="dropdown-menu" aria-labelledby="VisualNovelListAction">
+                            <li><a class="dropdown-item" href="#">Планирую</a></li>
+                            <li><a class="dropdown-item" href="#">Перечитываю</a></li>
+                            <li><a class="dropdown-item" href="#">Прочитано</a></li>
+                            <li><a class="dropdown-item" href="#">Планирую</a></li>
+                            <li><a class="dropdown-item" href="#">Брошено</a></li>
+                            <li><a class="dropdown-item" href="#">Черный список</a></li>
+                            <li><a class="dropdown-item" href="#">Любимое</a></li>
+                        </ul>
+                    </div>
+                    <a class="btn btn-secondary" asp-controller="Novel" asp-action="Edit" asp-route-id="@vn.Id">Редактировать</a>
+                    <a class="btn btn-secondary" asp-controller="Novel" asp-action="EditImage" asp-route-id="@vn.Id">Изменить изображение</a>
+                    <div class="dropdown m-2">
+                        <button class="btn btn-secondary dropdown-toggle" type="button" id="VisualNovelRanking" data-bs-toggle="dropdown" aria-expanded="false">
+                            Оценка@* TODO if already in list show that *@
+                        </button>
+                        <ul class="dropdown-menu" aria-labelledby="VisualNovelRanking">
+                            @for (int i = 10; i >= 1; i--)
+                            {
+                                <li><a class="dropdown-item" href="#">@i</a></li>
+                            }
+                        </ul>
+                    </div>
+                }
+                else
+                {
+                    <p class="mt-2">Чтобы оценить визуальную новеллу или добавить её в список, необходимо <a asp-area="Identity" asp-page="/Account/Login">авторизоваться</a></p>
+                }
+            </div>
+            <div class="col-xxl-8 col-xl-8 col-lg-8 col-md-8 col-sm-12" style="text-align: left;">
+                <h1>@vn.Title</h1>
+                @if (vn.OriginalTitle != null) 
+                {
+                    <p><b>Оригинальное название</b>: @vn.OriginalTitle</p>
+                }
+                @switch (vn.Status)
+                {
+                    case Status.Release:
+                        <p><b>Статус</b>: <span class="text-success">Релиз</span></p>
+                        break;
+                    case Status.InDevelopment:
+                        <p><b>Статус</b>: <span class="text-info">В разработке</span></p>
+                        break;
+                    case Status.Abandoned:
+                        <p><b>Статус</b>: <span class="text-danger">Заброшено</span></p>
+                        break;
+                    case Status.Announced:
+                        <p><b>Статус</b>: <span class="text-danger">Анонсировано</span></p>
+                        break;
+                }
+
+                @if (@ViewBag.VnAverageRating == -1 || @ViewBag.VnRatingCount == -1)
+                {
+                    <p><b>Рейтинг</b>: 0/10 (Никто ещё не оценил эту визуальную новеллу)</p>
+                } 
+                else
+                {
+                    <p><b>Рейтинг</b>: @ViewBag.VnAverageRating/10 (@ViewBag.VnRatingCount оценок)</p>
+                }
+                @if (@vn.VndbRating != null)
+                {
+                    <p><b>Рейтинг VNDB</b>: @vn.VndbRating/10 (@vn.VndbVoteCount)</p>
+                }
+                <p>
+                    <b>Время чтения</b>:
+                    @{
+                        string readingTime = "";
+                        switch (vn.ReadingTime)
+                        {
+                            case ReadingTime.LessTwoHours:
+                                readingTime = "Меньше 2 часов";
                                 break;
-                            case SpoilerLevel.Minor:
-                                @Html.ActionLink(@tag.Tag.Name + "<sup>S</sup>", "FiltredBy", "Novel", new { id = tag.Tag.Id, filterName = "tag", message = $"Визуальные новеллы с тегом: {tag.Tag.Name}" })
-                                ;
+                            case ReadingTime.TwoToTenHours:
+                                readingTime = "От 2 до 10 часов";
                                 break;
-                            case SpoilerLevel.Major:
-                                @Html.ActionLink(@tag.Tag.Name + "<sup style='color: red'>S</sup>", "FiltredBy", "Novel", new { id = tag.Tag.Id, filterName = "tag", message = $"Визуальные новеллы с тегом: {tag.Tag.Name}" })
-                                ;
+                            case ReadingTime.TenToThirtyHours:
+                                readingTime = "От 10 до 30 часов";
                                 break;
-                            default:
+                            case ReadingTime.ThirtyToFiftyHours:
+                                readingTime = "От 30 до 50 часов";
+                                break;
+                            case ReadingTime.OverFiftyHours:
+                                readingTime = "Больше 50 часов";
                                 break;
                         }
                     }
+                    @readingTime
+
+                    @if (vn.VndbLengthInMinutes != null)
+                    {
+                        string convertedMinutes = "";
+                        int minutes = (int)vn.VndbLengthInMinutes;
+
+                        if (minutes < 60)
+                        {
+                            convertedMinutes = $"{minutes} м.";
+                        }
+                        else if (minutes == 60)
+                        {
+                            convertedMinutes = $"1 ч.";
+                        }
+                        else
+                        {
+                            int remainMinutes = minutes % 60;
+                            int hours = (minutes - remainMinutes) / 60;
+
+                            if (remainMinutes == 0)
+                            {
+                                convertedMinutes = $"{hours} ч.";
+                            }
+                            else
+                            {
+                                convertedMinutes = $"{hours} ч. {remainMinutes} м.";
+                                
+                            }
+                        }
+
+                        if (!string.IsNullOrEmpty(convertedMinutes))
+                        {
+                            <span>(@convertedMinutes)</span>
+                        }
+                    }
+                </p>
+
+                @if (vn.Author != null && vn.Author.Count > 1)
+                {
+                    <p><b>Авторы</b>: 
+                    @for (int i = 0; i < vn.Author.Count; i++)
+                    {
+                        @if (vn.Author[i].Source != null)
+                        {
+                            <a target="_blank" href="@vn.Author[i].Source">@vn.Author[i].Name</a>
+                        }
+                        else
+                        {
+                            <span>@vn.Author[i].Name</span>
+                        }
+                        if (vn.Author[i].VndbId != null)
+                        {
+                            if (i < vn.Author.Count - 1)
+                            {
+                                <span>(</span><a target="_blank" href="https://vndb.org/@vn.Author[i].VndbId">VNDB</a><span>),</span>
+                            }
+                            else
+                            {
+                                <span>(</span><a target="_blank" href="https://vndb.org/@vn.Author[i].VndbId">VNDB</a><span>)</span>
+                            }
+                        }
+                    }
+                    </p>
                 }
-            </p>
-            <p>Дата добавления: @vn.DateAdded</p>
-            <p>Дата обновления: @vn.DateUpdated</p>
-            <p>Описание: @vn.Description</p>
+                else
+                {
+                    @if (vn.Author != null && vn.Author.Count > 0 && vn.Author[0].VndbId != null)
+                    {
+                        <p><b>Автор: </b>
+                        @if (vn.Author[0].Source != null)
+                        {
+                            <span><a target="_blank" href="@vn.Author[0].Source">@vn.Author[0].Name</a></span>
+                        }
+                        else
+                        {
+                            <span>@vn.Author[0].Name</span>
+                        }
+
+                        @if(vn.Author[0].VndbId != null)
+                        {
+                            <span> (</span><a target="_blank" href="https://vndb.org/@vn.Author[0].VndbId">VNDB</a><span>)</span>
+                        }
+                        </p>
+                    }
+                }
+
+                @if (vn.Translator != null)
+                {
+                    <p><b>Переводчик</b>: <a target="_blank" href="@vn.Translator.Source">@vn.Translator.Name</a></p>
+                }
+                <p><b>Год выпуска</b>: @vn.ReleaseYear</p>
+                <p><b>Добавил</b>: @vn.AddedUserName</p>
+                <p>
+                    <b>Языки</b>:
+                    @{
+                        for (int i = 0; i < vn.Languages.Count; i++)
+                        {
+                            if (i < vn.Languages.Count - 1)
+                            {
+                                <a asp-controller="Novel" asp-action="FiltredBy" asp-route-id="@vn.Languages[i].Id" asp-route-filter="3">@vn.Languages[i].Name</a><span>,</span>
+                            }
+                            else
+                            {
+                                <a asp-controller="Novel" asp-action="FiltredBy" asp-route-id="@vn.Languages[i].Id" asp-route-filter="3">@vn.Languages[i].Name</a>
+                            }
+                        }
+                    }
+                </p>
+                <p>
+                    <b>Платформы</b>:
+                    @{
+                        for (int i = 0; i < vn.Platforms.Count; i++)
+                        {
+                            if (i < vn.Platforms.Count - 1)
+                            {
+                                <a asp-controller="Novel" asp-action="FiltredBy" asp-route-id="@vn.Platforms[i].Id" asp-route-filter="4">@vn.Platforms[i].Name</a><span>,</span>
+                            }
+                            else
+                            {
+                                <a asp-controller="Novel" asp-action="FiltredBy" asp-route-id="@vn.Platforms[i].Id" asp-route-filter="4">@vn.Platforms[i].Name</a>
+                            }
+                        }
+                    }
+                </p>
+                <p>
+                    <b>Жанры</b>:
+                    @{
+                        for (int i = 0; i < vn.Genres.Count; i++)
+                        {
+                            if (i < vn.Genres.Count - 1)
+                            {
+                                <a asp-controller="Novel" asp-action="FiltredBy" asp-route-id="@vn.Genres[i].Id" asp-route-filter="2">@vn.Genres[i].Name</a><span>,</span>
+                            }
+                            else
+                            {
+                                <a asp-controller="Novel" asp-action="FiltredBy" asp-route-id="@vn.Genres[i].Id" asp-route-filter="2">@vn.Genres[i].Name</a>
+                            }
+                        }
+                    }
+                </p>
+                <p><b>Дата добавления</b>: @vn.DateAdded</p>
+                <p><b>Дата обновления</b>: @vn.DateUpdated</p>
+                <div class="row">
+                    @if (vn.Links != null)
+                    {
+                        foreach (DownloadLink link in vn.Links.OrderBy(vn => vn.GamingPlatform.Id))
+                        {
+                                <div class="col-lg-4 col-xl-4 col-xxl-4 col-md-4 col-sm-12">
+                                @switch (link.GamingPlatform.Name)
+                                {
+                                    case "Windows":
+                                        <img src="~/images/windows_logo_48.png" />
+                                        <span><a target="_blank" href="@link.Url">Скачать для Windows</a></span>
+                                        break;
+                                    case "Linux":
+                                        <img src="~/images/linux_logo_48.png" />
+                                        <span><a target="_blank" href="@link.Url">Скачать для Linux</a></span>
+                                        break;
+                                    case "MacOS":
+                                        <img src="~/images/macOs_logo_48.png" />
+                                        <span><a target="_blank" href="@link.Url">Скачать для Mac</a></span>
+                                        break;
+                                    case "Android":
+                                        <img src="~/images/android_logo_48.png" />
+                                        <span><a target="_blank" href="@link.Url">Скачать для Android</a></span>
+                                        break;
+                                    case "iPhone":
+                                        <img src="~/images/iphone_logo_48.png" />
+                                        <span><a target="_blank" href="@link.Url">Скачать для IPhone</a></span>
+                                        break;
+                                    case "Web":
+                                        <img src="~/images/web_logo_48.png" />
+                                        <span><a target="_blank" href="@link.Url">Web версия</a></span>
+                                        break;
+                                }
+                            </div>
+                        }
+                    }
+                    @if (vn.SteamLink != null)
+                    {
+                        <div class="col-lg-4 col-xl-4 col-xxl-4 col-md-4 col-sm-12">
+                            <img style="width: 48px; height: 48px;" src="~/images/steam_logo_48.png" />
+                            <span><a target="_blank" href="@vn.SteamLink">Визуальная новелла в Steam</a></span>
+                        </div>
+                    }
+                    
+                    @if (vn.OtherLinks != null && vn.OtherLinks.Count > 0)
+                    {
+                        <div class="accordion my-3" id="accordionOtherLinks">
+                            <div class="accordion-item">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="false" aria-controls="collapseOne">
+                                        Дополнительные ссылки
+                                    </button>
+                                </h2>
+                                <div id="collapseOne" class="accordion-collapse collapse" data-bs-parent="#accordionOtherLinks">
+                                    <div class="accordion-body">
+                                        @foreach (var link in vn.OtherLinks)
+                                        {
+                                            <p><a target="_blank" href="@link.Url">@link.Name</a></p>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
         </div>
-       
+        <div>
+            <ul class="nav nav-tabs" id="myTab" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="description-tab" data-bs-toggle="tab" data-bs-target="#description-tab-pane" type="button" role="tab" aria-controls="description-tab-pane" aria-selected="true">Описание</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="tags-tab" data-bs-toggle="tab" data-bs-target="#tags-tab-pane" type="button" role="tab" aria-controls="tags-tab-pane" aria-selected="false">Теги</button>
+                </li>
+            </ul>
+            <div class="tab-content" id="myTabContent">
+                <div class="tab-pane fade show active" id="description-tab-pane" role="tabpanel" aria-labelledby="description-tab" tabindex="0">
+                    <div>
+                        <p>@vn.Description</p>
+                    </div>
+                    @{
+                        string[] screenshotsPathes = ViewBag.ScreenshotsData;
+
+                        if (screenshotsPathes != null)
+                        {
+                            <div class="fotorama d-flex justify-content-center" data-nav="thumbs" data-autoplay="true" data-arrows="true" data-swipe="true" data-click="false">
+
+                                @foreach (string path in screenshotsPathes)
+                                {
+                                    string query = ViewBag.GetImageByPathURL + path;
+
+                                    <div data-img="@query"><a href="@query" data-fancybox=></a></div>
+
+                                }
+                            </div>
+                        }
+                    }
+                </div>
+                <div class="tab-pane fade" id="tags-tab-pane" role="tabpanel" aria-labelledby="tags-tab" tabindex="0">
+                    @* <p style="float: right">
+                        <a>Скрыть спойлеры</a>
+                        <a>Небольшие спойлеры</a>
+                        <a>Все спойлеры</a>
+                    </p> *@
+                    <ul class="tags-column">
+                        @{
+                            var contTags = vn.Tags.Where(t => t.Tag.Category == TagCategory.cont).OrderBy(t => t.Tag.Name);
+                            var techTags = vn.Tags.Where(t => t.Tag.Category == TagCategory.tech).OrderBy(t => t.Tag.Name);
+                            var eroTags = vn.Tags.Where(t => t.Tag.Category == TagCategory.ero).OrderBy(t => t.Tag.Name);
+
+                            <li class="tags-column-parent">Контент</li>
+
+                            foreach (TagMetadata tag in contTags)
+                            {
+                                switch (tag.SpoilerLevel)
+                                {
+                                    case SpoilerLevel.None:
+                                        <li class="tags-column-item">
+                                            <a id="tags-spoiler-none" asp-controller="Novel" asp-action="FiltredBy" asp-route-id="@tag.Tag.Id" asp-route-filter="1">@tag.Tag.Name</a>
+                                        </li>
+                                        break;
+                                    case SpoilerLevel.Minor:
+                                        <li class="tags-column-item">
+                                            <a id="tags-spoiler-minor" asp-controller="Novel" asp-action="FiltredBy" asp-route-id="@tag.Tag.Id" asp-route-filter="1">@tag.Tag.Name<sup style="font-size: 14px">S</sup></a>
+                                        </li>
+                                        break;
+                                    case SpoilerLevel.Major:
+                                        <li class="tags-column-item">
+                                            <a id="tags-spoiler-major" asp-controller="Novel" asp-action="FiltredBy" asp-route-id="@tag.Tag.Id" asp-route-filter="1">@tag.Tag.Name<sup style="color: red; font-size: 14px">S</sup></a>
+                                        </li>
+                                        break;
+                                    default:
+                                        break;
+                                }
+                            }
+
+                            <li class="tags-column-parent">Техническое</li>
+
+                            foreach (TagMetadata tag in techTags)
+                            {
+                                switch (tag.SpoilerLevel)
+                                {
+                                    case SpoilerLevel.None:
+                                        <li class="tags-column-item">
+                                            <a id="tags-spoiler-none" asp-controller="Novel" asp-action="FiltredBy" asp-route-id="@tag.Tag.Id" asp-route-filter="1">@tag.Tag.Name</a>
+                                        </li>
+                                        break;
+                                    case SpoilerLevel.Minor:
+                                        <li class="tags-column-item">
+                                            <a id="tags-spoiler-minor" asp-controller="Novel" asp-action="FiltredBy" asp-route-id="@tag.Tag.Id" asp-route-filter="1">@tag.Tag.Name<sup style="font-size: 14px">S</sup></a>
+                                        </li>
+                                        break;
+                                    case SpoilerLevel.Major:
+                                        <li class="tags-column-item">
+                                            <a id="tags-spoiler-major" asp-controller="Novel" asp-action="FiltredBy" asp-route-id="@tag.Tag.Id" asp-route-filter="1">@tag.Tag.Name<sup style="color: red; font-size: 14px">S</sup></a>
+                                        </li>
+                                        break;
+                                    default:
+                                        break;
+                                }
+                            }
+
+                            // <li class="tags-column-parent">Сексуальный контент</li>
+
+                            // foreach (TagMetadata tag in eroTags)
+                            // {
+                            //     switch (tag.SpoilerLevel)
+                            //     {
+                            //         case SpoilerLevel.None:
+                            //             <li class="tags-column-item">
+                            //                 <a id="tags-spoiler-none" asp-controller="Novel" asp-action="FiltredBy" asp-route-id="@tag.Tag.Id" asp-route-filter="1">@tag.Tag.Name</a>
+                            //             </li>
+                            //             break;
+                            //         case SpoilerLevel.Minor:
+                            //             <li class="tags-column-item">
+                            //                 <a id="tags-spoiler-minor" asp-controller="Novel" asp-action="FiltredBy" asp-route-id="@tag.Tag.Id" asp-route-filter="1">@tag.Tag.Name<sup style="font-size: 14px">S</sup></a>
+                            //             </li>
+                            //             break;
+                            //         case SpoilerLevel.Major:
+                            //             <li class="tags-column-item">
+                            //                 <a id="tags-spoiler-major" asp-controller="Novel" asp-action="FiltredBy" asp-route-id="@tag.Tag.Id" asp-route-filter="1">@tag.Tag.Name<sup style="color: red; font-size: 14px">S</sup></a>
+                            //             </li>
+                            //             break;
+                            //         default:
+                            //             break;
+                            //     }
+                            // }
+                        }
+                </ul>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
+<script src="@fancyappsScript"></script>
+<script>
+    Fancybox.bind("[data-fancybox]", {
+
+    });
+
+</script>
 

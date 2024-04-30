@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Newtonsoft.Json;
 using NovelSite.Models;
+using NovelSite.Services.Queries;
 using System.Diagnostics;
 
 namespace NovelSite.Controllers
@@ -18,28 +18,67 @@ namespace NovelSite.Controllers
 
         public async Task<IActionResult> Index()
         {
-            ViewBag.Vns = await GetVisualNovels();
+            ViewBag.Tags = await HttpQueries.GetTags(1, 50);
+            ViewBag.Platforms = await HttpQueries.GetGamingPlatforms();
+            ViewBag.Languages = await HttpQueries.GetLanguages();
+            ViewBag.Genres = await HttpQueries.GetGenres();
+            ViewBag.Vns = await HttpQueries.GetVisualNovelsWithRatingsFiltred();
+
             return View();
+        }
+
+        public async Task<IActionResult> VisualNovelContent
+            (
+            List<int> tags = null, List<int> genres = null, List<int> languages = null,
+            List<int> platforms = null, SpoilerLevel spoilerLevel = SpoilerLevel.None, 
+            ReadingTime readingTime = ReadingTime.Any, Sort sort = Sort.DateUpdatedDescending
+            )
+        {
+            try
+            {
+                var vns = await HttpQueries.GetVisualNovelsWithRatingsFiltred(genres, tags, languages, platforms, spoilerLevel, readingTime, sort);
+
+                if (vns != null)
+                {
+                    ViewBag.Vns = vns;
+                    return PartialView("_VisualNovelContentPartial");
+                }
+                else
+                {
+                    return NoContent();
+                }
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+        }
+
+        public async Task<IActionResult> VNDBSearch(string search)
+        {
+            try
+            {
+                var vns = await VNDBQueries.SearchOnVNDB(search);
+
+                if (vns != null)
+                {
+                    ViewBag.VndbSearchContent = vns.Results;
+                    return PartialView("_VndbSearchResult");
+                }
+                else
+                {
+                    return NoContent();
+                }
+            }
+            catch (Exception)
+            {
+                throw;
+            }
         }
 
         public IActionResult Privacy()
         {
             return View();
-        }
-
-        [HttpGet]
-        private static async Task<List<VisualNovel>> GetVisualNovels()
-        {
-            string vnData = @"";
-            HttpClient client = new HttpClient();
-            HttpResponseMessage response = await client.GetAsync(API_URL + "VisualNovel?Page=1&ItemsPerPage=50");
-            HttpContent content = response.Content;
-            if (response.IsSuccessStatusCode)
-            {
-                vnData = await response.Content.ReadAsStringAsync();
-            }
-
-            return JsonConvert.DeserializeObject<VisualNovel[]>(vnData).ToList();
         }
 
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]

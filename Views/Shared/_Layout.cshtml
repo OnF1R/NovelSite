@@ -31,6 +31,12 @@
                             <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
                         </li>
                     </ul>
+
+                    <form id="searchForm" method="post" asp-controller="Novel" asp-action="Search" class="d-flex" role="search">
+                        <input name="query" class="form-control me-2" type="search" placeholder="Search" aria-label="Search">
+                        <button class="btn btn-outline-success" type="submit">Search</button>
+                    </form>
+                    
                     <partial name="_LoginPartial" />
                 </div>
             </div>

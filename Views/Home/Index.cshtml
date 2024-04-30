@@ -1,5 +1,6 @@
 ﻿@{
-    ViewData["Title"] = "Home Page";
+    ViewData["Title"] = "Визуальные новеллы на русском языке и не только";
+    VisualNovelWithRatingResult vns = ViewBag.Vns;
 }
 
 <div class="text-center">
@@ -8,24 +9,470 @@
 </div>
 
 
+<div class="d-flex justify-content-center mt-2" id="liveAlertPlaceholder"></div>
+
 <div class="text-center">
-    <div class="row g-2">
-        @foreach (VisualNovel vn in ViewBag.Vns)
-        {
-            <div class="card col-md-4 mt-4 col-lg-4">
-                @if (vn.CoverImage != null)
-                {
-                    string strByte = Convert.ToBase64String(vn.CoverImage);
-                    <img loading="lazy" src="data:image/jpg;base64,@strByte" class="home_cover_image">
-                }
-                else
-                {
-                    <img loading="lazy" src="images/thumbnail.png" class="home_cover_image">
-                }
-                <h1>@vn.Title</h1>
-                <button type="button" class="btn"><a asp-controller="Novel" asp-action="Novel" asp-route-id="@vn.Id">More</a></button>
+    <div class="" id="searchFilterCollapse">
+        <form id="filterForm" method="post" enctype="multipart/form-data">
+            <div class="my-4">
+                <select id="readingTimeSelect" class="js-example-basic-single" aria-label="Visual novel reading time select">
+                    <option value="@ReadingTime.Any" selected>Любая продолжительность</option>
+                    <option value="@ReadingTime.LessTwoHours">Меньше 2-ух часов</option>
+                    <option value="@ReadingTime.TwoToTenHours">От 2-ух до 10-ти часов</option>
+                    <option value="@ReadingTime.TenToThirtyHours">От 10-ти до 30-ти часов</option>
+                    <option value="@ReadingTime.ThirtyToFiftyHours">От 30-ти до 50-ти часов</option>
+                    <option value="@ReadingTime.OverFiftyHours">Больше 50-ти часов</option>
+                </select>
+
+                <select id="sortSelect" class="js-example-basic-single" aria-label="Visual novel sort select">
+                    <option value="@Sort.DateUpdatedDescending" selected>Дата обновления (Сначала новые)</option>
+                    <option value="@Sort.DateUpdatedAscending">Дата обновления (Сначала старые)</option>
+                    <option value="@Sort.DateAddedDescending">Дата добавления (Сначала новые)</option>
+                    <option value="@Sort.DateAddedAscending">Дата добавления (Сначала старые)</option>
+                    <option value="@Sort.RatingDescending">Рейтинг (По убыванию)</option>
+                    <option value="@Sort.RatingAscending">Рейтинг (По возрастанию)</option>
+                    <option value="@Sort.VoteCountDescending">Количество оценок (По убыванию)</option>
+                    <option value="@Sort.VoteCountAscending">Количество оценок (По возрастанию)</option>
+                    <option value="@Sort.VNDBRatingDescending">Рейтинг VNDB (По убыванию)</option>
+                    <option value="@Sort.VNDBRatingAscending">Рейтинг VNDB (По возрастанию)</option>
+                    <option value="@Sort.VNDBVoteCountDescending">Количество оценок VNDB (По убыванию)</option>
+                    <option value="@Sort.VNDBVoteCountAscending">Количество оценок VNDB (По возрастанию)</option>
+                    <option value="@Sort.ReleaseDateDescending">Дата выхода (Сначала новые)</option>
+                    <option value="@Sort.ReleaseDateAscending">Дата выхода (Сначала старые)</option>
+                    <option value="@Sort.Title">Название</option>
+                </select>
             </div>
-        }
+
+            <div class="">
+                <button type="button" class="btn btn-primary dropdown-toggle" id="dropdownGenres" data-bs-toggle="dropdown" aria-expanded="false">
+                    Жанры
+                </button>
+                <ul class="dropdown-menu dropdown-menu-genre" aria-labelledby="dropdownGenres" id="genreDropdown">
+                    <li style="margin: 0px 6px;">
+                        <input type="text" class="form-control mb-2" id="genreSearch" placeholder="Поиск жанров">
+                    </li>
+                    @foreach (Genre genre in ViewBag.Genres)
+                    {
+                        <li><div class="dropdown-item dropdown-item-genre checkbox-label"><input type="checkbox" name="genres" value="@genre.Id" data-state="none" style="display: none;"> <span>@genre.Name</span></div></li>
+                    }
+                </ul>
+                <button type="button" class="btn btn-primary dropdown-toggle" id="dropdownTags" data-bs-toggle="dropdown" aria-expanded="false">
+                    Теги
+                </button>
+                <ul class="dropdown-menu dropdown-menu-tag" aria-labelledby="dropdownTags" id="tagDropdown">
+                    <li style="margin: 0px 6px;">
+                        <input type="text" class="form-control mb-2" id="tagSearch" placeholder="Поиск тегов">
+                    </li>
+                    <li class="radioSpoilerLevel" style="margin: 0px 6px;">
+                        <input type="radio" class="mb-2" id="spoilerLevelNoneCheckbox" name="spoilerLevelCheck" value="@SpoilerLevel.None" checked />
+                        <label for="spoilerLevelNoneCheckbox">Скрыть спойлеры</label>
+                    </li>
+                    <li class="radioSpoilerLevel" style="margin: 0px 6px;">
+                        <input type="radio" class="mb-2" id="spoilerLevelMinorCheckbox" name="spoilerLevelCheck" value="@SpoilerLevel.Minor" />
+                        <label for="spoilerLevelMinorCheckbox">Незначительные спойлеры</label>
+                    </li>
+                    <li class="radioSpoilerLevel" style="margin: 0px 6px;">
+                        <input type="radio" class="mb-2" id="spoilerLevelMajorCheckbox" name="spoilerLevelCheck" value="@SpoilerLevel.Major" />
+                        <label for="spoilerLevelMajorCheckbox" style="color:red;">Спойлери всё!</label>
+                    </li>
+                    <li><hr class="dropdown-divider"></li>
+                    @foreach (Tag tag in ViewBag.Tags)
+                    {
+                        <li><div class="dropdown-item dropdown-item-tag checkbox-label"><input type="checkbox" name="tags" value="@tag.Id" data-state="none" style="display: none;"><span>@tag.Name</span></div></li>
+                    }
+                </ul>
+                <button type="button" class="btn btn-primary dropdown-toggle" id="dropdownLanguages" data-bs-toggle="dropdown" aria-expanded="false">
+                    Языки
+                </button>
+                <ul class="dropdown-menu dropdown-menu-language" aria-labelledby="dropdownLanguages" id="languageDropdown">
+                    <li style="margin: 0px 6px;">
+                        <input type="text" class="form-control mb-2" id="languageSearch" placeholder="Поиск языков">
+                    </li>
+                    <li><hr class="dropdown-divider"></li>
+                    @foreach (Language language in ViewBag.Languages)
+                    {
+                        <li><div class="dropdown-item dropdown-item-language checkbox-label"><input type="checkbox" name="languages" value="@language.Id" data-state="none" style="display: none;"><span>@language.Name</span></div></li>
+                    }
+                </ul>
+                <button type="button" class="btn btn-primary dropdown-toggle" id="dropdownPlatforms" data-bs-toggle="dropdown" aria-expanded="false">
+                    Платформы
+                </button>
+                <ul class="dropdown-menu dropdown-menu-platform" aria-labelledby="dropdownPlatforms" id="platformDropdown">
+                    <li style="margin: 0px 6px;">
+                        <input type="text" class="form-control mb-2" id="platformSearch" placeholder="Поиск платформ">
+                    </li>
+                    <li><hr class="dropdown-divider"></li>
+                    @foreach (GamingPlatform platform in ViewBag.Platforms)
+                    {
+                        <li><div class="dropdown-item dropdown-item-platform checkbox-label"><input type="checkbox" name="platforms" value="@platform.Id" data-state="none" style="display: none;"><span>@platform.Name</span></div></li>
+                    }
+                </ul>
+                <button id="applyFilter" type="submit" class="btn btn-primary btn-primary-submit-filter">Применить фильтр</button>
+                <button id="resetFilter" type="submit" class="btn btn-danger" style="display: none;">Сбросить фильтр</button>
+            </div>
+
+            
+        </form>
+    </div>
+
+    <div class="row g-2" id="visualNovelContentContainer">
+        @await Html.PartialAsync("_VisualNovelContentPartial")
     </div>
 </div>
+<script>
+    $(document).ready(function () {
+        $('.js-example-basic-single').select2();
+        $('.js-example-basic-multiple').select2();
+    });
+
+    document.addEventListener("DOMContentLoaded", function () {
+        var tagSearchInput = document.getElementById('tagSearch');
+        var tagItems = document.querySelectorAll('.dropdown-menu-tag .dropdown-item-tag');
+
+        var genreSearchInput = document.getElementById('genreSearch');
+        var genreItems = document.querySelectorAll('.dropdown-menu-genre .dropdown-item-genre');
+
+        var languageSearchInput = document.getElementById('languageSearch');
+        var languageItems = document.querySelectorAll('.dropdown-menu-language .dropdown-item-language');
+
+        var platformSearchInput = document.getElementById('platformSearch');
+        var platformItems = document.querySelectorAll('.dropdown-menu-platform .dropdown-item-platform');
+
+        tagSearchInput.addEventListener('input', function () {
+            var searchTermTag = tagSearchInput.value.toLowerCase();
+
+            tagItems.forEach(function (tagItem) {
+                var tagText = tagItem.querySelector('span').textContent.toLowerCase();
+                if (tagText.includes(searchTermTag)) {
+                    tagItem.style.display = 'block';
+                } else {
+                    tagItem.style.display = 'none';
+                }
+            });
+        });
+
+        genreSearchInput.addEventListener('input', function () {
+            var searchTermGenre = genreSearchInput.value.toLowerCase();
+
+            genreItems.forEach(function (genreItem) {
+                var genreText = genreItem.querySelector('span').textContent.toLowerCase();
+                if (genreText.includes(searchTermGenre)) {
+                    genreItem.style.display = 'block';
+                } else {
+                    genreItem.style.display = 'none';
+                }
+            });
+        });
+
+        languageSearchInput.addEventListener('input', function () {
+            var searchTermLanguage = languageSearchInput.value.toLowerCase();
+
+            languageItems.forEach(function (languageItem) {
+                var languageText = languageItem.querySelector('span').textContent.toLowerCase();
+                if (languageText.includes(searchTermLanguage)) {
+                    languageItem.style.display = 'block';
+                } else {
+                    languageItem.style.display = 'none';
+                }
+            });
+        });
+
+        platformSearchInput.addEventListener('input', function () {
+            var searchTermPlatform = platformSearchInput.value.toLowerCase();
+
+            platformItems.forEach(function (platformItem) {
+                var platformText = platformItem.querySelector('span').textContent.toLowerCase();
+                if (platformText.includes(searchTermPlatform)) {
+                    platformItem.style.display = 'block';
+                } else {
+                    platformItem.style.display = 'none';
+                }
+            });
+        });
+
+        if (document.querySelector('.radioSpoilerLevel')) {
+            document.querySelectorAll('.radioSpoilerLevel').forEach(function (label) {
+                label.addEventListener('click', function (event) {
+                    event.stopPropagation();
+                });
+            });
+        }
+
+        if (document.querySelector('.dropdown-menu .dropdown-item')) {
+            document.querySelectorAll('.dropdown-menu .dropdown-item').forEach(function (label) {
+                label.addEventListener('click', function (event) {
+                    event.stopPropagation(); // Предотвращаем закрытие выпадающего меню при клике на чекбокс
+                    var checkbox = this.querySelector('input[type="checkbox"]');
+                    checkbox.checked = !checkbox.checked; // Изменяем состояние чекбокса
+                    checkbox.dispatchEvent(new Event('change')); // Генерируем событие change
+                });
+            });
+        }
+
+        if (document.querySelector('.dropdown-menu .dropdown-item input[type="checkbox"]')) {
+            document.querySelectorAll('.dropdown-menu .dropdown-item input[type="checkbox"]').forEach(function (checkbox) {
+                checkbox.addEventListener('change', function () {
+                    var states = ['none', 'include', 'exclude'];
+                    var currentState = states.indexOf(this.getAttribute('data-state'));
+                    var nextState = (currentState + 1) % states.length;
+                    this.setAttribute('data-state', states[nextState]);
+
+                    // Добавляем или удаляем класс included или excluded для стилизации чекбокса
+                    if (states[nextState] === 'include') {
+                        this.parentElement.classList.add('checked');
+                        this.parentElement.classList.remove('excluded');
+                    } else if (states[nextState] === 'exclude') {
+                        this.parentElement.classList.remove('checked');
+                        this.parentElement.classList.add('excluded');
+                    } else {
+                        this.parentElement.classList.remove('checked');
+                        this.parentElement.classList.remove('excluded');
+                    }
+                });
+            });
+        }
+
+        if (document.querySelector('.btn-primary-submit-filter')) {
+
+            var resetButton = document.getElementById('resetFilter'); 
+            resetButton.addEventListener('click', function (event) {
+                event.preventDefault();
+            });
+
+            document.querySelector('.btn-primary-submit-filter').addEventListener('click', function (event) {
+                event.preventDefault();
+
+                var tags = [];
+                var excludeTags = [];
+                var genres = [];
+                var excludeGenres = [];
+                var languages = [];
+                var excludeLanguages = [];
+                var platforms = [];
+                var excludePlatforms = [];
+
+                var spoilerLevel = document.querySelector('input[name="spoilerLevelCheck"]:checked').value;
+                var readingTime = document.getElementById('readingTimeSelect').value;
+                var sort = document.getElementById('sortSelect').value
+
+                resetButton.style.display = "inline-block";
+
+                resetButton.addEventListener('click', function (event) {
+                    event.preventDefault();
+                    document.querySelectorAll('input[name="tags"]').forEach(function (tag) {
+                        var tagName = tag.value;
+                        var states = ['none', 'include', 'exclude'];
+                        tag.setAttribute('data-state', states[0]);
+                        tag.parentElement.classList.remove('checked');
+                        tag.parentElement.classList.remove('excluded');
+                        tags.length = 0;
+                        excludeTags.length = 0;
+                    });
+
+                    document.querySelectorAll('input[name="genres"]').forEach(function (genre) {
+                        var genreName = genre.value;
+                        var states = ['none', 'include', 'exclude'];
+                        genre.setAttribute('data-state', states[0]);
+                        genre.parentElement.classList.remove('checked');
+                        genre.parentElement.classList.remove('excluded');
+                        genres.length = 0;
+                        excludeGenres = 0;
+                    });
+
+                    document.querySelectorAll('input[name="languages"]').forEach(function (language) {
+                        var languageName = language.value;
+                        var states = ['none', 'include', 'exclude'];
+                        language.setAttribute('data-state', states[0]);
+                        language.parentElement.classList.remove('checked');
+                        language.parentElement.classList.remove('excluded');
+                        languages.length = 0;
+                        excludeLanguages.length = 0;
+                    });
+
+                    document.querySelectorAll('input[name="platforms"]').forEach(function (platform) {
+                        
+                        var platformName = platform.value;
+                        var states = ['none', 'include', 'exclude'];
+                        platform.setAttribute('data-state', states[0]);
+                        platform.parentElement.classList.remove('checked');
+                        platform.parentElement.classList.remove('excluded');
+                        platforms.length = 0;
+                        excludePlatforms.length = 0;
+                    });
+
+                    var spoilerLevelRadio = document.getElementsByName('spoilerLevelCheck');
+                    spoilerLevelRadio[0].checked = true;
+                    spoilerLevel = spoilerLevelRadio[0].value
+
+                    var readingTimeSelect = document.getElementById('readingTimeSelect');
+                    readingTimeSelect.value = readingTimeSelect.options[0].value;
+                    readingTime = readingTimeSelect.value;
+
+                    var event = new Event('change');
+                    readingTimeSelect.dispatchEvent(event);
+
+                    var sortSelect = document.getElementById('sortSelect');
+                    sortSelect.value = sortSelect.options[0].value;
+                    sort = sortSelect.value;
+
+                    var event = new Event('change');
+                    sortSelect.dispatchEvent(event);
+
+                    updateContent(tags.concat(excludeTags), genres.concat(excludeGenres), languages.concat(excludeLanguages), platforms.concat(excludePlatforms), spoilerLevel, readingTime, sort);
+                });
+
+                document.querySelectorAll('input[name="tags"]').forEach(function (tag) {
+                    var tagName = tag.value;
+                    var tagState = tag.getAttribute('data-state');
+                    if (tagState === 'include') {
+                        tags.push(tagName);
+                    } else if (tagState === 'exclude') {
+                        excludeTags.push(-tagName);
+                    }
+                });
+
+                document.querySelectorAll('input[name="genres"]').forEach(function (genre) {
+                    var genreName = genre.value;
+                    var genreState = genre.getAttribute('data-state');
+                    if (genreState === 'include') {
+                        genres.push(genreName);
+                    } else if (genreState === 'exclude') {
+                        excludeGenres.push(-genreName);
+                    }
+                });
+
+                document.querySelectorAll('input[name="languages"]').forEach(function (language) {
+                    var languageName = language.value;
+                    var languageState = language.getAttribute('data-state');
+                    if (languageState === 'include') {
+                        languages.push(languageName);
+                    } else if (languageState === 'exclude') {
+                        excludeLanguages.push(-languageName);
+                    }
+                });
+
+                document.querySelectorAll('input[name="platforms"]').forEach(function (platform) {
+                    var platformName = platform.value;
+                    var platformState = platform.getAttribute('data-state');
+                    if (platformState === 'include') {
+                        platforms.push(platformName);
+                    } else if (platformState === 'exclude') {
+                        excludePlatforms.push(-platformName);
+                    }
+                });
+
+                //console.log("tags[" + tags.join(',') + "] exclude_tags[" + excludeTags.join(',') + "] genres[" + genres.join(',') + "] exclude_genres[" + excludeGenres.join(',') + "] languages[" + languages.join(',') + "] exclude_languages[" + excludeLanguages.join(',') + "] platforms[" + platforms.join(',') + "] exclude_platforms[" + excludePlatforms.join(',') + "]");
+
+                updateContent(tags.concat(excludeTags), genres.concat(excludeGenres), languages.concat(excludeLanguages), platforms.concat(excludePlatforms), spoilerLevel, readingTime, sort);
+            });
+        }
+    });
+
+    function updateContent (tags, genres, languages, platforms, spoilerLevel, readingTime, sort) {
+        
+        var alert = document.getElementById("liveAlertPlaceholder");
+
+        alert.innerHTML = `<div class="spinner-border text-primary my-2" role = "status"><span class="visually-hidden">Loading...</span></div>`
+
+        var url = "/Home/VisualNovelContent?";
+
+        var isFirstIteration = true;
+
+        tags.forEach((value, index, fullArray) => {
+            if (isFirstIteration) {
+                url += "tags=" + value;
+                isFirstIteration = false;
+            }
+            else {
+                url += "&tags=" + value
+            }
+        });
+
+        genres.forEach((value, index, fullArray) => {
+            if (isFirstIteration) {
+                url += "genres=" + value;
+                isFirstIteration = false;
+            }
+            else {
+                url += "&genres=" + value
+            }
+        });
+
+        languages.forEach((value, index, fullArray) => {
+            if (isFirstIteration) {
+                url += "languages=" + value;
+                isFirstIteration = false;
+            }
+            else {
+                url += "&languages=" + value
+            }
+        });
+
+        platforms.forEach((value, index, fullArray) => {
+            if (isFirstIteration) {
+                url += "platforms=" + value;
+                isFirstIteration = false;
+            }
+            else {
+                url += "&platforms=" + value
+            }
+        });
+
+        if (isFirstIteration) {
+            url += "spoilerLevel=" + spoilerLevel;
+            isFirstIteration = false;
+        }
+        else {
+            url += "&spoilerLevel=" + spoilerLevel;
+        }
+
+        if (isFirstIteration) {
+            url += "readingTime=" + readingTime;
+            isFirstIteration = false;
+        }
+        else {
+            url += "&readingTime=" + readingTime;
+        }
+
+        if (isFirstIteration) {
+            url += "sort=" + sort;
+            isFirstIteration = false;
+        }
+        else {
+            url += "&sort=" + sort;
+        }
+
+        var xhr = new XMLHttpRequest();
+        xhr.open("GET", url, true);
+        xhr.onreadystatechange = function () {
+            if (xhr.readyState === 4) {
+                if (xhr.status === 200) {
+                    document.getElementById("visualNovelContentContainer").innerHTML = xhr.responseText;
+                    alert.innerHTML = '';
+                } else {
+                    alert.innerHTML = `@await Html.PartialAsync("_ErrorAlert")`;
+                }
+            }
+        };
+        xhr.send();
+    }
+
+    // document.addEventListener("DOMContentLoaded", function () {
+    //     document.getElementById("applyFilter").addEventListener("click", function () {
+    //         var xhr = new XMLHttpRequest();
+    //         xhr.open("GET", "/Home/VisualNovelContent", true); // Замените ControllerName на имя вашего контроллера
+    //         xhr.onreadystatechange = function () {
+    //             if (xhr.readyState === 4) {
+    //                 if (xhr.status === 200) {
+    //                     console.log(xhr);
+    //                     document.getElementById("visualNovelContentContainer").innerHTML = xhr.responseText;
+    //                 } else {
+    //                     alert('Произошла ошибка при загрузке данных.');
+    //                 }
+    //             }
+    //         };
+    //         xhr.send();
+    //     });
+    // });
+</script>
 

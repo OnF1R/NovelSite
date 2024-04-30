@@ -1,0 +1,40 @@
+﻿<div class="modal fade" id="addAuthorModal" tabindex="-1" aria-labelledby="addAuthorModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addAuthorModalLabel">Добавление автора визуальных новелл</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                @model AuthorRequest
+                <form id="visualNovelAuthorAddForm" method="post" asp-action="CreateAuthor" enctype="multipart/form-data">
+                <div class="mb-3">
+                    <label for="authorName" class="form-label">Название автора</label>
+                    <input id="authorName" asp-for="Name" type="text" name="Name" class="form-control" required>
+                    @* <div id="emailHelp" class="form-text">We'll never share your email with anyone else.</div> *@
+                </div>
+                <div class="mb-3">
+                    <label for="authorSource" class="form-label">Ссылка на источник автора</label>
+                    <input id="authorSource" asp-for="Source" type="text" name="Source" class="form-control">
+                    <div id="authorVndbIdHelp" class="form-text">
+                        <p>Ссылка на группу Вконтаке, личный сайт или другой официальный источник автора, оставить пустым если источника нет</p>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label for="authorVndbId" class="form-label">Идентифиакатор автора на VNDB</label>
+                    <input id="authorVndbId" asp-for="VndbId" type="text" name="VndbId" class="form-control">
+                    <div id="authorVndbIdHelp" class="form-text">
+                        <p>Идентификатор автора всегда начитается с английской буквы <b>'p'</b>, и выглядит как <b>'p123'</b>, оставить пустым если автора нет на VNDB</p>
+                    </div>
+                </div>
+                <div class="text-center">
+                    <button type="submit" class="btn btn-primary">Добавить</button>
+                </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+
+</script>

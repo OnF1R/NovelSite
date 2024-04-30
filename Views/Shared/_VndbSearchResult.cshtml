@@ -1,0 +1,55 @@
+﻿@{
+    List<VNDBResult> vndbResults = ViewBag.VndbSearchContent;
+}
+
+<div class="row g-2 my-3">
+    @foreach (VNDBResult vn in vndbResults)
+    {
+        <div class="card col-lg-3 col-md-3 col-sm-6">
+            <div class="box py-2">
+                <p>
+                    <img loading="lazy" src="~/images/vndbIcon.png" />
+                    <span>Название: @vn.Title</span>
+                </p>
+                @if (vn.Developers != null)
+                {
+                    if (vn.Developers.Count == 1)
+                    {
+                        <p>Разработчик: @vn.Developers[0].Name</p>
+                    }
+                    else if (vn.Developers.Count > 1)
+                    {
+                        <p>
+                            Разработчики:
+                            @for (int i = 0; i < vn.Developers.Count; i++)
+                            {
+                                @vn.Developers[i].Name
+                                if (i < vn.Developers.Count - 1)
+                                {
+                                    <span>, </span>
+                                }
+                            }
+                        </p>
+                    }
+                }
+                @if (vn.Released != null)
+                {
+                    if (@DateOnly.TryParse(@vn.Released, out DateOnly date))
+                    {
+                        <p>Дата выхода: @date</p>
+                    }
+                    else
+                    {
+                        <p>Дата выхода: @vn.Released</p>
+                    }
+                }
+                <p>
+                    Рейтинг: @{
+                        var rating = vn.Rating != null ? Math.Round((double)vn.Rating / 10, 2) : 0;
+                    } @rating
+                </p>
+                <button class="btn btn-primary">Выбрать</button>
+            </div>
+        </div>
+    }
+</div>

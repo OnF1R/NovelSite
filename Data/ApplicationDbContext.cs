@@ -12,7 +12,7 @@ namespace NovelSite.Data
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            optionsBuilder.UseSqlite("Data Source=application.db");
+            optionsBuilder.UseNpgsql("Server=localhost;Port=5432;User Id=postgres;Password=moloko990;Database=novelsite;");
             //optionsBuilder.UseLazyLoadingProxies();
         }
     }

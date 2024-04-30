@@ -1,24 +1,111 @@
 html {
-  font-size: 14px;
+    font-size: 14px;
 }
 
 @media (min-width: 768px) {
-  html {
-    font-size: 16px;
-  }
+    html {
+        font-size: 16px;
+    }
 }
 
 html {
-  position: relative;
-  min-height: 100%;
+    position: relative;
+    min-height: 100%;
 }
 
 body {
-  margin-bottom: 60px;
+    margin-bottom: 60px;
 }
 
 .home_cover_image {
     object-fit: contain;
     width: 100%;
     height: 20vw;
+}
+
+.bg-top {
+    left: 0;
+    top: 0;
+    z-index: -4;
+    width: 100%;
+    height: 100vh;
+    opacity: 0.7;
+    position: fixed;
+    background: no-repeat center center fixed;
+    background-size: cover;
+    object-fit: cover;
+    -webkit-background-size: cover;
+    -o-background-size: cover;
+    -moz-background-size: cover;
+}
+
+.fotorama__stage__frame.fotorama__active {
+    background: black;
+}
+
+.checkbox-label {
+    cursor: pointer;
+    display: block;
+    padding: .25rem 1.5rem;
+    clear: both;
+    font-weight: 400;
+    color: #212529;
+    text-align: inherit;
+    white-space: normal;
+    background-color: transparent;
+    border: 0;
+}
+
+.checkbox-label::before {
+    content: '';
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    margin-right: 5px;
+}
+
+.checkbox-label.checked::before {
+    background-image: url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="green"%3E%3Cpath d="M0 0h24v24H0z" fill="none"%3E%3C/path%3E%3Cpath d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"%3E%3C/path%3E%3C/svg%3E');
+}
+
+.checkbox-label.excluded::before {
+    background-image: url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="red"%3E%3Cpath d="M0 0h24v24H0z" fill="none"%3E%3C/path%3E%3Cpath d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"%3E%3C/path%3E%3C/svg%3E');
+}
+
+
+.dropdown-item:active {
+    color: black;
+    background-color: transparent;
+}
+
+.box {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-direction: column;
+}
+
+.dropdown-menu-tag {
+    max-height: 500px;
+    max-width: 300px;
+    overflow: scroll;
+}
+
+.tags-column {
+    column-width: 400px;
+    text-align: left; 
+    list-style-type: none;
+}
+
+.tags-column-parent {
+    margin: 5px 0 3px 0;
+    font-weight: bold;
+}
+
+.tags-column-item {
+
 }

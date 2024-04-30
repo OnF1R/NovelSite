@@ -1,11 +1,14 @@
 ﻿@{
-    ViewData["Title"] = "Home Page";
+    ViewData["Title"] = "Add Visual Novel";
 }
 
 <div class="text-center">
     <h1 class="display-4">Добавить визуальную новеллу</h1>
 </div>
 
+<img id="previewBackgroundImage" class="bg-top" src="#" alt="" hidden>
+
+@* @await Html.PartialAsync("_AddAuthorModalPartial") *@
 
 <div class="text-center">
 
@@ -18,24 +21,66 @@
         </div>
         <div class="mb-3">
             <label for="visualNovelOriginalName" class="form-label">Оригинальное название визуальной новеллы</label>
-            <input id="visualNovelOriginalName" asp-for="OriginalTitle" type="text" name="OriginalTitle" class="form-control" required>
+            <input id="visualNovelOriginalName" asp-for="OriginalTitle" type="text" name="OriginalTitle" class="form-control">
+            <div id="visualNovelOriginalNameHelp" class="form-text">
+                Если название визуальной новеллы изначально оригинальное или не имеет логического перевода, например "VA-11 HALL-A", оставлять пустым.
+            </div>
         </div>
         <div class="mb-3">
-            <label for="visualNovelAuthor" class="form-label">Автор визуальной новеллы</label>
-            <input id="visualNovelAuthor" asp-for="Autor" type="text" name="Autor" class="form-control" required>
+            <label for="visualNovelVndbId" class="form-label">Идентификатор новеллы на VNDB</label>
+            <input id="visualNovelVndbId" asp-for="VndbId" type="text" name="VndbId" class="form-control" required>
+            <div id="visualNovelVndbIdHelp" class="form-text">
+                Идентификатор находится в конце ссылки на страницу новеллы (https://vndb.org/v97), в данном примере идентификатором будет "v97", оставлять пустым если визуальной новеллы нет на vndb.
+            </div>
         </div>
+
+        <div class="mb-3">
+            <label for="searchVNDB" class="form-label">Поиск визуальной новеллы на VNDB</label>
+            <input id="searchVNDB" type="text" name="searchVNDB" class="form-control">
+            <div id="searchVNDBResult"></div>
+        </div>
+
+        <div class="mb-3">
+            <label for="visualNovelAuthor" class="form-label">Автор/Авторы визуальной новеллы</label>
+            <select asp-for="Authors" id="existedAuthorSelect" name="Authors" class="form-select js-example-basic-multiple" multiple required aria-label="Visual novel author select">
+                @foreach(Author author in ViewBag.Authors) {
+                    <option value="@author.Id">@author.Name</option>
+                }
+            </select>
+            @* <button type="button" class="btn btn-primary mt-2" data-bs-toggle="modal" data-bs-target="#addAuthorModal">
+                Добавить автора
+            </button> *@
+        </div>
+
         <div class="mb-3">
             <label for="visualNovelTranslator" class="form-label">Переводчик визуальной новеллы</label>
-            <input id="visualNovelTranslator" asp-for="Translator" type="text" name="Translator" class="form-control" required>
+            <select asp-for="Translator" id="existedTranslatorSelect" class="form-select js-example-basic-single" aria-label="Visual novel translator select">
+                <option value="@null">Нет переводчика</option>
+                @foreach (Translator translator in ViewBag.Translators)
+                {
+                    <option value="@translator.Id">@translator.Name</option>
+                }
+            </select>
         </div>
+        @* TODO Сделать кнопки добавления нового автора или переводчика, возможно тега и тд, вероятнее всего в модальном окне *@
+        <div class="mb-3">
+            <label for="visualNovelStatusSelect" class="form-label">Статус визуальной новеллы</label>
+            <select asp-for="Status" class="form-select" name="Status" aria-label="visualNovelStatusSelect" required>
+                <option value="0">Релиз</option>
+                <option value="1">В разработке</option>
+                <option value="2">Заброшено</option>
+                <option value="3">Анонс</option>
+            </select>
+        </div>
+
         <div class="mb-3">
             <label for="visualNovelReadingTimeSelect" class="form-label">Время прохождения визуальной новеллы</label>
             <select asp-for="ReadingTime" class="form-select" name="ReadingTime" aria-label="visualNovelReadingTimeSelect" required>
-                <option value="0">Меньше 2 часов</option>
-                <option value="1">От 2 до 10 часов</option>
-                <option value="2">От 10 до 30 часов</option>
-                <option value="3">От 30 до 50 часов</option>
-                <option value="4">Больше 50 часов</option>
+                <option value="1">Меньше 2 часов</option>
+                <option value="2">От 2 до 10 часов</option>
+                <option value="3">От 10 до 30 часов</option>
+                <option value="4">От 30 до 50 часов</option>
+                <option value="5">Больше 50 часов</option>
             </select>
         </div>
 
@@ -64,6 +109,42 @@
         </div>
 
         <div class="mb-3">
+            <label for="visualNovelBackgroundImage" class="form-label">Фон страницы визуальной новеллы</label>
+            <input id="visualNovelBackgroundImage" asp-for="BackgroundImage" type="file" name="BackgroundImage" accept="image/png, image/jpeg" class="form-control" aria-describedby="coverImageHelp">
+            <div id="backgroundImageHelp" class="form-text">
+                Ваше изображение должно быть подходящего формата (jpeg, png, bmp или gif) и иметь размер не превышающий 3МБ.
+            </div>
+            <div class="form-check form-switch d-flex justify-content-center">
+                <input class="form-check-input mx-3" type="checkbox" id="backgroundPreviewCheck">
+                <label class="form-check-label" for="backgroundPreviewCheck">Предпросмотр фонового изображения</label>
+            </div>
+        </div>
+        <div class="mb-3">
+            <label for="visualNovelScreenshots" class="form-label">Скриншоты визуальной новеллы</label>
+            <input id="visualNovelScreenshots" asp-for="Screenshots" type="file" name="Screenshots" accept="image/png, image/jpeg" class="form-control" aria-describedby="coverImageHelp" multiple>
+            <div id="screenshotsHelp" class="form-text">
+                Ваши изображения должны быть подходящего формата (jpeg, png, bmp или gif) и иметь размер не превышающий 3МБ.
+            </div>
+            @* <img id="previewCoverImage" class="img-fluid" src="#" alt="" height="auto" width="25%" hidden> *@
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label" for="visualNovelSteamLink">Ссылка на визуальную новеллу в Steam</label>
+            <input asp-for="SteamLink" name="SteamLink" class="form-control" id="visualNovelSteamLink">
+            <div id="visualNovelSteamLinkHelp" class="form-text">
+                Ссылка на страницу товара в Steam, если нет оставлять пустым.
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label" for="visualNovelTranslateLinkForSteam">Ссылка на русификатор для Steam</label>
+            <input asp-for="TranslateLinkForSteam" name="TranslateLinkForSteam" class="form-control" id="visualNovelTranslateLinkForSteam">
+            <div id="visualNovelTranslateLinkForSteamHelp" class="form-text">
+                Ссылка на руководство о русификации игры в Steam, если нет оставлять пустым.
+            </div>
+        </div>
+
+        <div class="mb-3">
             <label class="form-label" for="visualNovelDescription">Описание визуальной новеллы</label>
             <textarea asp-for="Description" name="Description" class="form-control" id="visualNovelDescription" rows="4" required></textarea>
         </div>
@@ -74,7 +155,7 @@
                 @{
                     foreach (Tag tag in ViewBag.Tags)
                     {
-                        <option value="@tag.Id">@tag.Name</option>
+                                                        <option value="@tag.Id">@tag.Name</option>
                     }
                 }
             </select>
@@ -82,13 +163,13 @@
 
         <div class="mb-3">
             <label id="tagsSelector" for="visualNovelMinorSpoilerTagsSelect" class="form-label">Теги визуальной новеллы с незначительными спойлерами</label>
-            <select asp-for="MinorSpoilerTags" class="form-select js-example-basic-multiple tags-selector" name="MinorSpoilerTags" aria-label="visualNovelMinorSpoilerTagsSelect" multiple required>
+            <select asp-for="MinorSpoilerTags" class="form-select js-example-basic-multiple tags-selector" name="MinorSpoilerTags" aria-label="visualNovelMinorSpoilerTagsSelect" multiple>
             </select>
         </div>
 
         <div class="mb-3">
             <label id="tagsSelector" for="visualNovelMajorSpoilerTagsSelect" class="form-label">Теги визуальной новеллы с значительными спойлерами</label>
-            <select asp-for="MajorSpoilerTags" class="form-select js-example-basic-multiple tags-selector" name="MajorSpoilerTags" aria-label="visualNovelMajorSpoilerTagsSelect" multiple required>
+            <select asp-for="MajorSpoilerTags" class="form-select js-example-basic-multiple tags-selector" name="MajorSpoilerTags" aria-label="visualNovelMajorSpoilerTagsSelect" multiple>
             </select>
         </div>
 
@@ -98,7 +179,7 @@
                 @{
                     foreach (Genre genre in ViewBag.Genres)
                     {
-                        <option value="@genre.Id">@genre.Name</option>
+                                                        <option value="@genre.Id">@genre.Name</option>
                     }
                 }
             </select>
@@ -110,7 +191,7 @@
                 @{
                     foreach (Language lang in ViewBag.Languages)
                     {
-                        <option value="@lang.Id">@lang.Name</option>
+                                                        <option value="@lang.Id">@lang.Name</option>
                     }
                 }
             </select>
@@ -118,30 +199,78 @@
 
         <div class="mb-3">
             <label for="visualNovelGamingPlatformsSelect" class="form-label">Игровые платформы визуальной новеллы</label>
-            <select asp-for="Platforms" class="form-select js-example-basic-multiple" name="Platforms" aria-label="visualNovelGamingPlatformsSelect" multiple required>
+            <select asp-for="Platforms" class="form-select js-example-basic-multiple gamingPlatform-selector" name="Platforms" aria-label="visualNovelGamingPlatformsSelect" multiple required>
                 @{
                     foreach (GamingPlatform gp in ViewBag.Platforms)
                     {
-                        <option value="@gp.Id">@gp.Name</option>
+                                                        <option value="@gp.Id">@gp.Name</option>
                     }
                 }
             </select>
         </div>
 
-        <button type="submit" class="btn btn-primary">Submit</button>
+        <div id="gamingPlatformInputs" class="mb-3"></div>
+
+        <div id="otherLinksInputs" class="mb-3"></div>
+
+        <button id="addOtherLinkInputButton" type="button" onclick="addOtherLinkInput()" class="btn btn-warning mb-3">Добавить дополнительную ссылку</button>
+
+        <button type="submit" class="btn btn-primary mb-3">Добавить визуальную новеллу</button>
     </form>
 
     <script>
+
+        var searchInput = document.getElementById("searchVNDB");
+
+        searchInput.addEventListener('change', function () {
+            var url = "/Home/VNDBSearch?search=" + searchInput.value;
+            var xhr = new XMLHttpRequest();
+            xhr.open("GET", url, true);
+            xhr.onreadystatechange = function () {
+                if (xhr.readyState === 4) {
+                    if (xhr.status === 200) {
+                        document.getElementById("searchVNDBResult").innerHTML = xhr.responseText;
+                        //alert.innerHTML = '';
+                    } else {
+                        
+                    }
+                }
+            };
+            xhr.send();
+        });;
+
+
         window.addEventListener('load', function () {
-            document.querySelector('input[type="file"]').addEventListener('change', function () {
+            document.querySelector('input[name="CoverImage"]').addEventListener('change', function () {
                 if (this.files && this.files[0]) {
-                    var img = document.querySelector('img');
+                    var img = document.getElementById('previewCoverImage');
                     img.onload = () => {
                         URL.revokeObjectURL(img.src);  // no longer needed, free memory
                     }
 
                     img.src = URL.createObjectURL(this.files[0]); // set src to blob url
                     img.hidden = false;
+                }
+            });
+
+            document.getElementById('backgroundPreviewCheck').addEventListener('change', function () {
+                if (this.checked) {
+                    var img = document.getElementById('previewBackgroundImage');
+                    img.hidden = false;
+                } else {
+                    var img = document.getElementById('previewBackgroundImage');
+                    img.hidden = true;
+                }
+            });
+
+            document.querySelector('input[name="BackgroundImage"]').addEventListener('change', function () {
+                if (this.files && this.files[0]) {
+                    var img = document.getElementById('previewBackgroundImage');
+                    img.onload = () => {
+                        URL.revokeObjectURL(img.src);  // no longer needed, free memory
+                    }
+
+                    img.src = URL.createObjectURL(this.files[0]); // set src to blob url
                 }
             });
         });
@@ -161,6 +290,7 @@
 
         $(document).ready(function () {
             $('.js-example-basic-multiple').select2();
+            $('.js-example-basic-single').select2();
         });
 
         var $select2 = $(".tags-selector");
@@ -176,6 +306,43 @@
         });
 
         $('.js-example-basic-multiple').select2();
+
+        $('.gamingPlatform-selector').on('select2:select', function (e) {
+            var container = document.getElementById('gamingPlatformInputs');
+            var gamingPlatformId = e.params.data.id;
+            var gamingPlatformName = e.params.data.text;
+            var inputGamingPlatformDiv = document.createElement('div');
+            inputGamingPlatformDiv.setAttribute("class", "mb-3");
+            inputGamingPlatformDiv.setAttribute("id", "inputGamingPlatformLinks-" + gamingPlatformId);
+            var label = document.createElement('label');
+            label.setAttribute("class", "form-label")
+            label.setAttribute("for", "visualNovelDownloadLinkGamingPlatformId")
+            label.textContent = "Ссылка на визуальную новеллу для " + gamingPlatformName;
+            inputGamingPlatformDiv.appendChild(label);
+            var idInput = document.createElement('input');
+            idInput.setAttribute("hidden", "true");
+            idInput.setAttribute("value", gamingPlatformId);
+            idInput.setAttribute("id", "visualNovelDownloadLinkGamingPlatformId");
+            idInput.setAttribute("asp-for", "DownloadLinkGamingPlatformId");
+            idInput.setAttribute("name", "DownloadLinkGamingPlatformId");
+            idInput.setAttribute("class", "form-control");
+            idInput.setAttribute("required", "true");
+            inputGamingPlatformDiv.appendChild(idInput);
+            var urlInput = document.createElement('input');
+            urlInput.setAttribute("id", "visualNovelDownloadLinkUrl");
+            urlInput.setAttribute("asp-for", "DownloadLinkUrl");
+            urlInput.setAttribute("name", "DownloadLinkUrl");
+            urlInput.setAttribute("class", "form-control");
+            urlInput.setAttribute("required", "true");
+            inputGamingPlatformDiv.appendChild(urlInput);
+            container.appendChild(inputGamingPlatformDiv);
+        });
+
+        $('.gamingPlatform-selector').on('select2:unselect', function (e) {
+            var gamingPlatformId = e.params.data.id;
+            var inputElem = document.getElementById('inputGamingPlatformLinks-' + gamingPlatformId);
+            inputElem.parentNode.removeChild(inputElem);
+        });
 
         $('.tags-selector').on('select2:select', function (e) {
             var selectedValue = e.params.data.id;
@@ -198,7 +365,89 @@
             $('.tags-selector').not(this).trigger('change');
         });
 
+        var otherLinksInputsCount = 0;
 
+        function removeInputContainerOfElement(elem) {
+            var container = elem.parentNode;
+            container.parentNode.removeChild(container);
+            otherLinksInputsCount--;
+            checkButtonAccessibility(); 
+        }
+
+        function checkButtonAccessibility() {
+            if (otherLinksInputsCount >= 8) {
+                var button = document.getElementById('addOtherLinkInputButton');
+
+                button.disabled = true;
+
+                button.textContent = "Максимум дополнительных ссылок"
+            } else {
+                var button = document.getElementById('addOtherLinkInputButton');
+
+                button.disabled = false;
+
+                button.textContent = "Добавить дополнительную ссылку"
+            }
+        }
+
+        function addOtherLinkInput() {
+            if (otherLinksInputsCount < 8) {    
+
+                var container = document.getElementById('otherLinksInputs');
+                var inputOtherLinkDiv = document.createElement('div');
+                inputOtherLinkDiv.setAttribute("class", "my-3 p-2");
+                inputOtherLinkDiv.setAttribute("id", "inputOtherLink");
+                var labelOtherLinkName = document.createElement('label');
+                labelOtherLinkName.setAttribute("class", "form-label");
+                labelOtherLinkName.setAttribute("for", "visualNovelOtherLinkName");
+                labelOtherLinkName.textContent = "Название ссылки";
+                inputOtherLinkDiv.appendChild(labelOtherLinkName);
+                var inputOtherLinkName = document.createElement('input');
+                inputOtherLinkName.setAttribute("id", "visualNovelOtherLinkName");
+                inputOtherLinkName.setAttribute("asf-for", "OtherLinkName");
+                inputOtherLinkName.setAttribute("name", "OtherLinkName");
+                inputOtherLinkName.setAttribute("class", "form-control");
+                inputOtherLinkName.setAttribute("required", "true");
+                inputOtherLinkDiv.appendChild(inputOtherLinkName);
+                var otherLinkNameHelp = document.createElement('div');
+                otherLinkNameHelp.setAttribute("id", "visualNovelOtherLinkNameHelp");
+                otherLinkNameHelp.setAttribute("class", "form-text");
+                otherLinkNameHelp.textContent = "Название ссылки, которая будет отображаться на странице новеллы.";
+                inputOtherLinkDiv.appendChild(otherLinkNameHelp);
+
+                var labelOtherLinkUrl = document.createElement('label');
+                labelOtherLinkUrl.setAttribute("class", "form-label");
+                labelOtherLinkUrl.setAttribute("for", "visualNovelOtherLinkUrl");
+                labelOtherLinkUrl.textContent = "Ссылка";
+                inputOtherLinkDiv.appendChild(labelOtherLinkUrl);
+                var inputOtherLinkUrl = document.createElement('input');
+                inputOtherLinkUrl.setAttribute("id", "visualNovelOtherLinkUrl");
+                inputOtherLinkUrl.setAttribute("asf-for", "OtherLinkUrl");
+                inputOtherLinkUrl.setAttribute("name", "OtherLinkUrl");
+                inputOtherLinkUrl.setAttribute("class", "form-control");
+                inputOtherLinkUrl.setAttribute("required", "true");
+                inputOtherLinkDiv.appendChild(inputOtherLinkUrl);
+                var otherLinkUrlHelp = document.createElement('div');
+                otherLinkUrlHelp.setAttribute("id", "visualNovelOtherLinkUrlHelp");
+                otherLinkUrlHelp.setAttribute("class", "form-text");
+                otherLinkUrlHelp.textContent = "Ссылка на дополнительный источник.";
+                inputOtherLinkDiv.appendChild(otherLinkUrlHelp);
+
+                var removeInputCardButton = document.createElement('button');
+                removeInputCardButton.setAttribute("id", "removeInputCard");
+                removeInputCardButton.setAttribute("onclick", "removeInputContainerOfElement(this)");
+                removeInputCardButton.setAttribute("class", "my-2 btn btn-danger");
+                removeInputCardButton.textContent = "Удалить";
+                inputOtherLinkDiv.appendChild(removeInputCardButton);
+
+                container.appendChild(inputOtherLinkDiv); 
+
+                otherLinksInputsCount++;
+
+                checkButtonAccessibility();
+
+            }  
+        }
     </script>
 </div>
 
