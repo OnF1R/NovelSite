@@ -1,0 +1,156 @@
+﻿@using Microsoft.AspNetCore.Identity;
+@using NovelSite.Data.Identity;
+@using NovelSite.Services.Extensions
+@using NovelSite.Services.Queries;
+@using NovelSite.Models.Comment;
+@model List<NovelSite.Models.Comment.VisualNovelCommentViewModel>
+@inject SignInManager<ApplicationIdentityUser> SignInManager;
+@inject UserManager<ApplicationIdentityUser> UserManager;
+
+@{
+    ApplicationIdentityUser currentUser = null;
+
+    if (SignInManager.IsSignedIn(User))
+    {
+        currentUser = await UserManager.GetUserAsync(User);
+    }
+
+    int visualNovelId = ViewBag.VisualNovelId;
+}
+
+@foreach (var comment in Model)
+{
+    var commentUser = await UserManager.FindByIdAsync(comment.UserId.ToString());
+    if (comment.IsDeleted)
+    {
+        <div id="comment-@comment.Id" class="comment @(comment.ParentCommentId != null ? "reply" : "")">
+            <span>@comment.PostedDate</span>
+
+            <p>Комментарий удален.</p>
+
+            @if (comment.HasReplies)
+            {
+                <ul id="replies-@comment.Id" class="replies">
+                    @await Html.PartialAsync("_CommentPartial", comment.Replies)
+                </ul>
+            }
+
+        </div>
+    }
+    else
+    {
+        <div id="comment-@comment.Id" class="comment @(comment.ParentCommentId != null ? "reply" : "")">
+            <div id="comment-content-@comment.Id">
+                <a class="me-2" asp-controller="Profile" asp-action="Index" asp-route-username="@commentUser.UserName"><img loading="lazy" src="@commentUser.AvatarFileName" alt="Avatar" class="nav-rounded-profile-image" /></a>
+                <a class="me-2" asp-controller="Profile" asp-action="Index" asp-route-username="@commentUser.UserName"><span>@commentUser.UserName</span></a>
+
+                <span class="me-2">@comment.PostedDate</span>
+
+                @if (comment.IsUpdated)
+                {
+                    <span class="me-2">Изменено</span>
+                }
+
+                @* <p style="margin: 0px;">@comment.Content</p> *@
+                <div class="mt-2">
+                    @Html.Raw(@MarkdownHelper.ToHtml(comment.Content))
+                </div>
+
+                @{
+                    int likes = comment.Rating.Where(cr => cr.IsLike).Count();
+
+                    int dislikes = comment.Rating.Count() - likes;
+                }
+
+                <div id="comment-menu-@comment.Id" class="d-flex align-items-center pb-2">
+                    @if (currentUser != null)
+                    {
+                        <svg @(currentUser.Id == comment.UserId.ToString() ? "" : $"onclick=handleRating('{@currentUser.Id}','{@comment.Id}',true)") class="me-2@(currentUser.Id == comment.UserId.ToString() ? " " : " comment-rating-icon comment-button ")comment-icon" viewBox="0 -0.5 21 21" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" fill="#ffffff"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"><defs> </defs> <g id="Page-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd"> <g id="Dribbble-Light-Preview" transform="translate(-259.000000, -760.000000)" fill="#ffffff"> <g id="icons" transform="translate(56.000000, 160.000000)"> <path id="like-@comment.Id" class="@(comment.Rating.Where(cr => cr.UserId.ToString() == currentUser.Id && cr.IsLike).FirstOrDefault() != null ? "comment-rating-icon-active" : "")" d="M203,620 L207.200006,620 L207.200006,608 L203,608 L203,620 Z M223.924431,611.355 L222.100579,617.89 C221.799228,619.131 220.638976,620 219.302324,620 L209.300009,620 L209.300009,608.021 L211.104962,601.825 C211.274012,600.775 212.223214,600 213.339366,600 C214.587817,600 215.600019,600.964 215.600019,602.153 L215.600019,608 L221.126177,608 C222.97313,608 224.340232,609.641 223.924431,611.355 L223.924431,611.355 Z" id="like-[#1385]"> </path> </g> </g> </g> </g></svg>
+
+                        <span id="likes-@comment.Id" class="me-2">@(likes > 0 ? likes : "")</span>
+
+                        <svg @(currentUser.Id == comment.UserId.ToString() ? "" : $"onclick=handleRating('{@currentUser.Id}','{@comment.Id}',false)") class="me-2@(currentUser.Id == comment.UserId.ToString() ? " " : " comment-rating-icon comment-button ")comment-icon" viewBox="0 -0.5 21 21" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" fill="#ffffff"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <defs> </defs> <g id="Page-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd"> <g id="Dribbble-Light-Preview" transform="translate(-179.000000, -760.000000)" fill="#ffffff"> <g id="icons" transform="translate(56.000000, 160.000000)"> <path id="dislike-@comment.Id" class="@(comment.Rating.Where(cr => cr.UserId.ToString() == currentUser.Id && !cr.IsLike).FirstOrDefault() != null ? "comment-rating-icon-active" : "")" d="M139.800374,612 L144.00037,612 L144.00037,600 L139.800374,600 L139.800374,612 Z M127.698085,600 L137.700376,600 L137.700376,611.979 L135.894378,618.174 C135.725328,619.224 134.776129,620 133.66103,620 C132.412581,620 131.400381,619.036 131.400381,617.847 L131.400381,612 L125.873186,612 C124.026238,612 122.659139,610.358 123.074939,608.644 L124.899837,602.109 C125.200137,600.868 126.360386,600 127.698085,600 L127.698085,600 Z" id="dislike-[#1387]"> </path> </g> </g> </g> </g></svg>
+
+                        <span id="dislikes-@comment.Id" class="me-2">@(dislikes > 0 ? dislikes : "")</span>
+                    }
+
+                    @if (currentUser != null && currentUser.Id == comment.UserId.ToString())
+                    {
+                        <div class="dropdown">
+                            <a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLink" data-bs-toggle="dropdown" data-bs-auto-close="true" aria-expanded="false">
+                                ...
+                            </a>
+                            <ul class="dropdown-menu" aria-labelledby="dropdownMenuLink">
+                                <li><a class="btn btn-primary dropdown-item" role="button" onclick="showUpdateForm('@comment.Id')">Редактировать</a></li>
+                                <li><a class="btn btn-primary dropdown-item" role="button" onclick="submitDeleteComment('@comment.Id')">Удалить</a></li>
+                            </ul>
+                        </div>
+                    }
+
+                    @if (currentUser != null && currentUser.Id != comment.UserId.ToString())
+                    {
+                        <button class="btn btn-primary mx-3" onclick="showReplyForm('@comment.Id')">Ответить</button>
+                    }
+                </div>
+
+                @if (currentUser != null && currentUser.Id != comment.UserId.ToString())
+                {
+                    <div id="replyFormContainer-@comment.Id" style="display: none;">
+                        <form id="replyForm-@comment.Id" class="comment-form" method="post" onsubmit="event.preventDefault(); submitReplyComment('@comment.Id');">
+                            <input type="hidden" name="UserId" value="@currentUser.Id" />
+                            <input type="hidden" name="ParentCommentId" value="@comment.Id" />
+                            <input type="hidden" name="VisualNovelId" value="@comment.VisualNovelId" />
+                            <div class="format-buttons">
+                                <button type="button" onclick="formatText('bold', '@comment.Id')">Bold</button>
+                                <button type="button" onclick="formatText('italic', '@comment.Id')">Italic</button>
+                                <button type="button" onclick="formatText('underline', '@comment.Id')">Underline</button>
+                                <button type="button" onclick="formatText('spoiler', '@comment.Id')">Spoiler</button>
+                            </div>
+                            <div>
+                                <textarea id="commentText-@comment.Id" name="Content" class="form-control" rows="2" placeholder="Текст комментария..."></textarea>
+                            </div>
+                            <div class="my-2">
+                                <button type="submit" class="btn btn-primary">Отправить</button>
+                                <button type="button" class="btn btn-danger" onclick="hideReplyForm('@comment.Id')">Отмена</button>
+                            </div>
+                        </form>
+                    </div>
+                }
+
+                @if (currentUser != null && currentUser.Id == commentUser.Id)
+                {
+                    <div id="updateFormContainer-@comment.Id" style="display: none;">
+                        <form id="updateForm-@comment.Id" class="comment-form" method="post" onsubmit="event.preventDefault(); submitUpdateComment('@comment.Id');">
+                            <input type="hidden" name="UserId" value="@currentUser.Id" />
+                            <input type="hidden" name="Id" value="@comment.Id" />
+                            <input type="hidden" name="PostedDate" value="@comment.PostedDate" />
+                            <input type="hidden" name="ParentCommentId" value="@comment.ParentCommentId" />
+                            <input type="hidden" name="IsUpdated" value="@true" />
+                            <input type="hidden" name="VisualNovelId" value="@comment.VisualNovelId" />
+                            <div class="format-buttons">
+                                <button type="button" onclick="formatText('bold', '@comment.Id')">Bold</button>
+                                <button type="button" onclick="formatText('italic', '@comment.Id')">Italic</button>
+                                <button type="button" onclick="formatText('underline', '@comment.Id')">Underline</button>
+                                <button type="button" onclick="formatText('spoiler', '@comment.Id')">Spoiler</button>
+                            </div>
+                            <div>
+                                <textarea id="commentText-@comment.Id" name="Content" class="form-control" rows="2" placeholder="Текст комментария...">@comment.Content</textarea>
+                            </div>
+                            <div class="my-2">
+                                <button type="submit" class="btn btn-primary">Сохранить</button>
+                                <button type="button" class="btn btn-danger" onclick="hideUpdateForm('@comment.Id')">Отмена</button>
+                            </div>
+                        </form>
+                    </div>
+                }
+            </div>
+            @if (comment.HasReplies)
+            {
+                <div id="replies-@comment.Id" class="replies">
+                    @await Html.PartialAsync("_CommentPartial", comment.Replies)
+                </div>
+            }
+        </div>
+    }
+
+}

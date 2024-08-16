@@ -10,7 +10,7 @@ namespace NovelSite.Services.Queries
 
         public static async Task<VNDBQueryResult<VNDBResult>> SearchOnVNDB(string search, string sort = "searchrank")
         {
-            string query = "{\"filters\": [\"search\", \"=\", \"" + search + "\"], \"fields\": \"title, olang, released, rating, length, developers.name\", \"sort\": \"" + sort + "\", \"results\": \"16\"}";
+            string query = "{\"filters\": [\"search\", \"=\", \"" + search + "\"], \"fields\": \"title, olang, released, rating, length, developers.name, image.url, image.sexual, image.violence\", \"sort\": \"" + sort + "\", \"results\": \"16\"}";
             string data = "";
             using (var client = new HttpClient())
             {
@@ -89,6 +89,38 @@ namespace NovelSite.Services.Queries
 
             string secondHaflQuery = "\"fields\": \"rating\"}";
             string query = firstHalfQuery + secondHaflQuery;
+            string data = "";
+            using (var client = new HttpClient())
+            {
+                try
+                {
+                    HttpContent content = new StringContent(query, Encoding.UTF8, "application/json");
+
+                    HttpResponseMessage response = await client.PostAsync(API_URL, content);
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        data = await response.Content.ReadAsStringAsync();
+                    }
+                    else
+                    {
+                        Console.WriteLine($"Ошибка: {response.StatusCode}");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Exception: {ex.Message}");
+                }
+            }
+
+            return JsonConvert.DeserializeObject<VNDBQueryResult<VNDBResult>>(data);
+        }
+
+        public static async Task<VNDBQueryResult<VNDBResult>> GetDetails(string id)
+        {
+            string query =
+                "{\"filters\": [\"id\", \"=\", \"" + id + "\"], " +
+                "\"fields\": \"id, title, length, released, devstatus, developers.name\"}";
             string data = "";
             using (var client = new HttpClient())
             {

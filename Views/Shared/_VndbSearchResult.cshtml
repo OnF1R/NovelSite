@@ -2,53 +2,65 @@
     List<VNDBResult> vndbResults = ViewBag.VndbSearchContent;
 }
 
-<div class="row g-2 my-3">
+<div class="row g-2 d-flex justify-content-center flex-wrap my-3">
     @foreach (VNDBResult vn in vndbResults)
     {
-        <div class="card col-lg-3 col-md-3 col-sm-6">
+        <div class="vndb-search-card vndb-search-card-filtred col-lg-3 col-md-3 col-sm-6">
             <div class="box py-2">
-                <p>
-                    <img loading="lazy" src="~/images/vndbIcon.png" />
-                    <span>Название: @vn.Title</span>
-                </p>
-                @if (vn.Developers != null)
+                @if (vn.Image != null && vn.Image.Url != null)
                 {
-                    if (vn.Developers.Count == 1)
+                    if (vn.Image.Sexual > 1f || vn.Image.Violence > 1f)
                     {
-                        <p>Разработчик: @vn.Developers[0].Name</p>
-                    }
-                    else if (vn.Developers.Count > 1)
-                    {
-                        <p>
-                            Разработчики:
-                            @for (int i = 0; i < vn.Developers.Count; i++)
-                            {
-                                @vn.Developers[i].Name
-                                if (i < vn.Developers.Count - 1)
-                                {
-                                    <span>, </span>
-                                }
-                            }
-                        </p>
-                    }
-                }
-                @if (vn.Released != null)
-                {
-                    if (@DateOnly.TryParse(@vn.Released, out DateOnly date))
-                    {
-                        <p>Дата выхода: @date</p>
+                        <img loading="lazy" class="explicit" src="@vn.Image.Url" />
                     }
                     else
                     {
-                        <p>Дата выхода: @vn.Released</p>
+                        <img loading="lazy" src="@vn.Image.Url" />
                     }
                 }
-                <p>
-                    Рейтинг: @{
-                        var rating = vn.Rating != null ? Math.Round((double)vn.Rating / 10, 2) : 0;
-                    } @rating
-                </p>
-                <button class="btn btn-primary">Выбрать</button>
+
+                <div class="vndb-searh-card-content">
+                    <span>Название: @vn.Title</span>
+
+                    @if (vn.Developers != null)
+                    {
+                        if (vn.Developers.Count == 1)
+                        {
+                            <p>Разработчик: @vn.Developers[0].Name</p>
+                        }
+                        else if (vn.Developers.Count > 1)
+                        {
+                            <p>
+                                Разработчики:
+                                @for (int i = 0; i < vn.Developers.Count; i++)
+                                {
+                                    @vn.Developers[i].Name
+                                    if (i < vn.Developers.Count - 1)
+                                    {
+                                        <span>, </span>
+                                    }
+                                }
+                            </p>
+                        }
+                    }
+                    @if (vn.Released != null)
+                    {
+                        if (@DateOnly.TryParse(@vn.Released, out DateOnly date))
+                        {
+                            <p>Дата выхода: @date</p>
+                        }
+                        else
+                        {
+                            <p>Дата выхода: @vn.Released</p>
+                        }
+                    }
+                    <p>
+                        Рейтинг: @{
+                            var rating = vn.Rating != null ? Math.Round((double)vn.Rating / 10, 2) : 0;
+                        } @rating
+                    </p>
+                    <button type="button" onclick="changeVNDBIdValue(this)" id="@vn.Id" class="btn btn-primary">Выбрать</button>
+                </div>
             </div>
         </div>
     }

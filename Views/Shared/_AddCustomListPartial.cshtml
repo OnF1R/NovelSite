@@ -1,0 +1,32 @@
+﻿@using NovelSite.Models.Novel;
+
+<div class="modal fade" id="addVisualNovelList" tabindex="-1" aria-labelledby="addVisualNovelListLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content vn-page">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addVisualNovelListLabel">Добавить список</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                @model NovelSite.Models.Novel.VisualNovelList
+                <form id="create-visual-novel-list-form" method="post" asp-controller="User" asp-action="CreateCustomList">
+                    <input asp-for="UserId" value="@Model.UserId" class="form-control" aria-required="true" hidden/>
+                    <div>
+                        <label asp-for="Name" class="form-label"></label>
+                        <input asp-for="Name" autocomplete="off" name="listName" class="form-control" aria-required="true" />
+                        <span asp-validation-for="Name" class="text-danger"></span>
+                    </div>
+                    <div class="mt-2">
+                        <input asp-for="IsPrivate" type="checkbox" class="form-check-input" />
+                        <label asp-for="IsPrivate" class="form-label form-check-label"></label>
+                        <span asp-validation-for="IsPrivate" class="text-danger"></span>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Добавить</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+
+</script>

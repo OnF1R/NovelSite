@@ -1,71 +1,119 @@
-﻿@{
-    ViewData["Title"] = "Add Visual Novel";
+﻿@using Microsoft.AspNetCore.Identity;
+@using NovelSite.Models.Identity;
+@using NovelSite.Data.Identity;
+@using NovelSite.Models.Novel;
+
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+@inject SignInManager<ApplicationIdentityUser> SignInManager;
+@inject UserManager<ApplicationIdentityUser> UserManager;
+
+@{
+    ViewData["Title"] = "Добавить визуальную новеллу";
+
+    ApplicationIdentityUser currentUser = null;
+
+    if (SignInManager.IsSignedIn(User))
+    {
+        currentUser = await UserManager.GetUserAsync(User);
+    }
 }
+
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
 <div class="text-center">
     <h1 class="display-4">Добавить визуальную новеллу</h1>
 </div>
 
+
 <img id="previewBackgroundImage" class="bg-top" src="#" alt="" hidden>
 
 @* @await Html.PartialAsync("_AddAuthorModalPartial") *@
+
+@if (currentUser == null)
+{
+    return;
+}
 
 <div class="text-center">
 
     @model VisualNovelRequest
     <form id="visualNovelAddForm" method="post" asp-action="Create" enctype="multipart/form-data">
+
+        <input id="addedUserId" asp-for="AdddeUserId" type="text" value="@currentUser.Id" name="AdddeUserId" hidden>
+        <input id="addedUserName" asp-for="AddedUserName" type="text" value="@currentUser.UserName" name="AddedUserName" hidden>
+
+
         <div class="mb-3">
-            <label for="visualNovelName" class="form-label">Название визуальной новеллы</label>
-            <input id="visualNovelName" asp-for="Title" type="text" name="Title" class="form-control" required>
-            @* <div id="emailHelp" class="form-text">We'll never share your email with anyone else.</div> *@
+            <label id="visualNovelTitleLabel" asp-for="Title" for="visualNovelTitle" class="form-label">Название визуальной новеллы</label>
+            <br />
+            <span asp-validation-for="Title" class="text-danger"></span>
+            <input id="visualNovelTitle" asp-for="Title" type="text" name="Title" class="form-control">
         </div>
+
+        <div id="anotherTitleInputs" class="mb-3"></div>
+
+        <button id="addAnotherTitleInputButton" type="button" onclick="addAnotherTitleInput()" class="btn btn-primary mb-3">Добавить дополнительное название</button>
+
         <div class="mb-3">
-            <label for="visualNovelOriginalName" class="form-label">Оригинальное название визуальной новеллы</label>
-            <input id="visualNovelOriginalName" asp-for="OriginalTitle" type="text" name="OriginalTitle" class="form-control">
-            <div id="visualNovelOriginalNameHelp" class="form-text">
-                Если название визуальной новеллы изначально оригинальное или не имеет логического перевода, например "VA-11 HALL-A", оставлять пустым.
+            <label asp-for="LinkName" for="visualNovelLinkName" class="form-label">Название ссылки на визуальную новеллу</label>
+            <br />
+            <span asp-validation-for="LinkName" class="text-danger"></span>
+            <input id="visualNovelLinkName" asp-for="LinkName" type="text" name="LinkName" class="form-control">
+            <div id="visualNovelLinkNameHelp" class="form-text">
+                Например: для визуальной новеллы с названием - "Saya No Uta", название ссылки должно выглядеть примерно так - "saya-no-uta".
             </div>
         </div>
+
         <div class="mb-3">
-            <label for="visualNovelVndbId" class="form-label">Идентификатор новеллы на VNDB</label>
-            <input id="visualNovelVndbId" asp-for="VndbId" type="text" name="VndbId" class="form-control" required>
+            <label for="visualNovelVndbIdInput" class="form-label">Идентификатор новеллы на VNDB</label>
+            <div class="input-group">
+                <input id="visualNovelVndbIdInput" asp-for="VndbId" type="text" name="VndbId" class="form-control" required>
+                <button onclick="autoFillByVNDBId(document.getElementById('visualNovelVndbIdInput').value)" class="btn btn-outline-secondary" type="button" id="button-addon2">Авто заполнение</button>
+            </div>
             <div id="visualNovelVndbIdHelp" class="form-text">
                 Идентификатор находится в конце ссылки на страницу новеллы (https://vndb.org/v97), в данном примере идентификатором будет "v97", оставлять пустым если визуальной новеллы нет на vndb.
             </div>
         </div>
 
         <div class="mb-3">
-            <label for="searchVNDB" class="form-label">Поиск визуальной новеллы на VNDB</label>
-            <input id="searchVNDB" type="text" name="searchVNDB" class="form-control">
+            <label for="searchVNDBInput" class="form-label">Поиск визуальной новеллы на VNDB</label>
+            <div class="input-group">
+                <input id="searchVNDBInput" type="text" name="searchVNDB" class="form-control">
+                <button id="searchVNDBButton" onclick="searchOnVNDB(document.getElementById('searchVNDBInput').value)" class="btn btn-outline-secondary" type="button">Поиск</button>
+            </div>
             <div id="searchVNDBResult"></div>
         </div>
 
         <div class="mb-3">
-            <label for="visualNovelAuthor" class="form-label">Автор/Авторы визуальной новеллы</label>
-            <select asp-for="Authors" id="existedAuthorSelect" name="Authors" class="form-select js-example-basic-multiple" multiple required aria-label="Visual novel author select">
-                @foreach(Author author in ViewBag.Authors) {
+            <label for="existedAuthorSelect" class="form-label">Автор/Авторы визуальной новеллы</label>
+            <select asp-for="Authors" id="existedAuthorSelect" name="Authors" class="form-select js-example-basic-multiple" multiple aria-label="Visual novel author select">
+                @foreach (Author author in ViewBag.Authors)
+                {
                     <option value="@author.Id">@author.Name</option>
                 }
             </select>
             @* <button type="button" class="btn btn-primary mt-2" data-bs-toggle="modal" data-bs-target="#addAuthorModal">
-                Добавить автора
+            Добавить автора
             </button> *@
         </div>
 
         <div class="mb-3">
-            <label for="visualNovelTranslator" class="form-label">Переводчик визуальной новеллы</label>
-            <select asp-for="Translator" id="existedTranslatorSelect" class="form-select js-example-basic-single" aria-label="Visual novel translator select">
-                <option value="@null">Нет переводчика</option>
+            <label for="existedTranslatorSelect" class="form-label">Переводчик/Переводчики визуальной новеллы</label>
+            <select asp-for="Translator" id="existedTranslatorSelect" name="Translator" class="form-select js-example-basic-multiple" multiple aria-label="Visual novel translator select">
                 @foreach (Translator translator in ViewBag.Translators)
                 {
                     <option value="@translator.Id">@translator.Name</option>
                 }
             </select>
+            @* <button type="button" class="btn btn-primary mt-2" data-bs-toggle="modal" data-bs-target="#addAuthorModal">
+            Добавить переводчика
+            </button> *@
         </div>
-        @* TODO Сделать кнопки добавления нового автора или переводчика, возможно тега и тд, вероятнее всего в модальном окне *@
+
         <div class="mb-3">
             <label for="visualNovelStatusSelect" class="form-label">Статус визуальной новеллы</label>
-            <select asp-for="Status" class="form-select" name="Status" aria-label="visualNovelStatusSelect" required>
+            <select id="visualNovelStatusSelect" asp-for="Status" class="form-select js-example-basic-single" name="Status" aria-label="visualNovelStatusSelect" required>
                 <option value="0">Релиз</option>
                 <option value="1">В разработке</option>
                 <option value="2">Заброшено</option>
@@ -75,7 +123,7 @@
 
         <div class="mb-3">
             <label for="visualNovelReadingTimeSelect" class="form-label">Время прохождения визуальной новеллы</label>
-            <select asp-for="ReadingTime" class="form-select" name="ReadingTime" aria-label="visualNovelReadingTimeSelect" required>
+            <select id="visualNovelReadingTimeSelect" asp-for="ReadingTime" class="form-select js-example-basic-single" name="ReadingTime" aria-label="visualNovelReadingTimeSelect" required>
                 <option value="1">Меньше 2 часов</option>
                 <option value="2">От 2 до 10 часов</option>
                 <option value="3">От 10 до 30 часов</option>
@@ -85,8 +133,34 @@
         </div>
 
         <div class="mb-3">
-            <label for="visualNovelReleaseYear" class="form-label">Год выхода визуальной новеллы</label>
-            <input id="visualNovelReleaseYear" asp-for="ReleaseYear" type="number" name="ReleaseYear" class="form-control" required>
+            <div class="form-group">
+                <div class="mb-3">
+                    <label for="release-year">Год выхода</label>
+                    <input class="form-control" asp-for="ReleaseYear" name="ReleaseYear" type="number" id="release-year" min="1900" max="2100" placeholder="2024">
+                </div>
+                <div class="mb-3">
+                    <label for="release-month">Месяц выхода</label>
+                    <select class="form-select js-example-basic-single" asp-for="ReleaseMonth" name="ReleaseMonth" id="release-month">
+                        <option value="">Выберите месяц</option>
+                        <option value="1">Январь</option>
+                        <option value="2">Февраль</option>
+                        <option value="3">Март</option>
+                        <option value="4">Апрель</option>
+                        <option value="5">Май</option>
+                        <option value="6">Июнь</option>
+                        <option value="7">Июль</option>
+                        <option value="8">Август</option>
+                        <option value="9">Сентябрь</option>
+                        <option value="10">Октябрь</option>
+                        <option value="11">Ноябрь</option>
+                        <option value="12">Декабрь</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="release-day">День выхода</label>
+                    <input class="form-control" asp-for="ReleaseDay" name="ReleaseDay" type="number" id="release-day" min="1" max="31" placeholder="15">
+                </div>
+            </div>
         </div>
 
         @*<div class="mb-3">
@@ -95,21 +169,20 @@
         </div> *@
 
         <div class="mb-3">
-            <label for="visualNovelAddedUserName" class="form-label">Кто добавил визуальнуй новеллу</label>
-            <input id="visualNovelAddedUserName" asp-for="AddedUserName" type="text" name="AddedUserName" class="form-control" required>
-        </div>
-
-        <div class="mb-3">
-            <label for="visualNovelCoverImage" class="form-label">Обложка визуальной новеллы</label>
+            <label id="visualNovelCoverImageLabel" for="visualNovelCoverImage" class="form-label">Обложка визуальной новеллы</label>
+            <br />
+            <span asp-validation-for="CoverImage" class="text-danger"></span>
             <input id="visualNovelCoverImage" asp-for="CoverImage" type="file" name="CoverImage" accept="image/png, image/jpeg" class="form-control" aria-describedby="coverImageHelp" required>
             <div id="coverImageHelp" class="form-text">
                 Ваше изображение должно быть подходящего формата (jpeg, png, bmp или gif) и иметь размер не превышающий 3МБ.
             </div>
-            <img id="previewCoverImage" class="img-fluid" src="#" alt="" height="auto" width="25%" hidden>
+            <img id="previewCoverImage" class="img-preview img-fluid" src="#" alt="" height="auto" width="25%" hidden>
         </div>
 
         <div class="mb-3">
             <label for="visualNovelBackgroundImage" class="form-label">Фон страницы визуальной новеллы</label>
+            <br />
+            <span asp-validation-for="BackgroundImage" class="text-danger"></span>
             <input id="visualNovelBackgroundImage" asp-for="BackgroundImage" type="file" name="BackgroundImage" accept="image/png, image/jpeg" class="form-control" aria-describedby="coverImageHelp">
             <div id="backgroundImageHelp" class="form-text">
                 Ваше изображение должно быть подходящего формата (jpeg, png, bmp или gif) и иметь размер не превышающий 3МБ.
@@ -120,8 +193,24 @@
             </div>
         </div>
         <div class="mb-3">
-            <label for="visualNovelScreenshots" class="form-label">Скриншоты визуальной новеллы</label>
+            <input asp-for="Screenshots"
+                   type="file"
+                   id="image-input"
+                   name="Screenshots"
+                   accept="image/jpeg"
+                   hidden
+                   multiple />
+
+            <label for="image-input" class="form-label">Скриншоты визуальной новеллы</label>
+            <br />
+            @*          <span asp-validation-for="Screenshots" class="text-danger"></span>
             <input id="visualNovelScreenshots" asp-for="Screenshots" type="file" name="Screenshots" accept="image/png, image/jpeg" class="form-control" aria-describedby="coverImageHelp" multiple>
+            *@
+            <div class="custom__image-container">
+                <label class="p-relative" id="add-img-label" for="add-single-img">+</label>
+                <input type="file" id="add-single-img" accept="image/jpeg" multiple hidden />
+            </div>
+
             <div id="screenshotsHelp" class="form-text">
                 Ваши изображения должны быть подходящего формата (jpeg, png, bmp или gif) и иметь размер не превышающий 3МБ.
             </div>
@@ -129,18 +218,26 @@
         </div>
 
         <div class="mb-3">
-            <label class="form-label" for="visualNovelSteamLink">Ссылка на визуальную новеллу в Steam</label>
-            <input asp-for="SteamLink" name="SteamLink" class="form-control" id="visualNovelSteamLink">
+            <label id="visualNovelSteamLinkLabel" class="form-label" for="visualNovelSteamLink">Ссылка на визуальную новеллу в Steam</label>
+            <input id="visualNovelSteamLink" asp-for="SteamLink" name="SteamLink" class="form-control">
             <div id="visualNovelSteamLinkHelp" class="form-text">
                 Ссылка на страницу товара в Steam, если нет оставлять пустым.
             </div>
         </div>
 
         <div class="mb-3">
-            <label class="form-label" for="visualNovelTranslateLinkForSteam">Ссылка на русификатор для Steam</label>
-            <input asp-for="TranslateLinkForSteam" name="TranslateLinkForSteam" class="form-control" id="visualNovelTranslateLinkForSteam">
+            <label id="visualNovelTranslateLinkForSteamLabel" class="form-label" for="visualNovelTranslateLinkForSteam">Ссылка на русификатор для Steam</label>
+            <input id="visualNovelTranslateLinkForSteam" asp-for="TranslateLinkForSteam" name="TranslateLinkForSteam" class="form-control">
             <div id="visualNovelTranslateLinkForSteamHelp" class="form-text">
                 Ссылка на руководство о русификации игры в Steam, если нет оставлять пустым.
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <label id="visualNovelSoundtrackYoutubePlaylistLinkLabel" class="form-label" for="visualNovelSoundtrackYoutubePlaylistLink">Ссылка на YouTube плейлист с саундтреков визуальной новеллы</label>
+            <input id="visualNovelSoundtrackYoutubePlaylistLink" asp-for="SoundtrackYoutubePlaylistLink" name="SoundtrackYoutubePlaylistLink" class="form-control">
+            <div id="visualNovelTranslateLinkForSteamHelp" class="form-text">
+                Если нет, оставлять пустым.
             </div>
         </div>
 
@@ -150,48 +247,57 @@
         </div>
 
         <div class="mb-3">
-            <label id="tagsSelector" for="visualNovelNoneSpoilerTagsSelect" class="form-label">Теги визуальной новеллы без спойлеров</label>
-            <select asp-for="NoneSpoilerTags" class="form-select js-example-basic-multiple tags-selector" name="NoneSpoilerTags" aria-label="visualNovelNoneSpoilerTagsSelect" multiple required>
-                @{
-                    foreach (Tag tag in ViewBag.Tags)
-                    {
-                                                        <option value="@tag.Id">@tag.Name</option>
-                    }
-                }
+            <label for="visualNovelRelatedNovelsSelect" class="form-label">Связанные визуальные новеллы</label>
+            <select id="visualNovelRelatedNovelsSelect" asp-for="RelatedNovels" class="form-select" name="RelatedNovels" aria-label="visualNovelRelatedNovelsSelect" multiple>
             </select>
         </div>
 
         <div class="mb-3">
+            <label id="tagsSelector" for="visualNovelNoneSpoilerTagsSelect" class="form-label">Теги визуальной новеллы без спойлеров</label>
+            <select id="visualNovelNoneSpoilerTagsSelect" asp-for="NoneSpoilerTags" class="form-select js-example-basic-multiple tags-selector" name="NoneSpoilerTags" aria-label="visualNovelNoneSpoilerTagsSelect" multiple>
+                @{
+                    foreach (Tag tag in ViewBag.Tags)
+                    {
+                        <option value="@tag.Id">@tag.Name</option>
+                    }
+                }
+            </select>
+            <div id="visualNovelTagsSelectHelp" class="form-text">
+                Если поле "Идентификатор новеллы на VNDB" заполнено, теги добавятся автоматически при отправке на сервер.
+            </div>
+        </div>
+
+        <div class="mb-3">
             <label id="tagsSelector" for="visualNovelMinorSpoilerTagsSelect" class="form-label">Теги визуальной новеллы с незначительными спойлерами</label>
-            <select asp-for="MinorSpoilerTags" class="form-select js-example-basic-multiple tags-selector" name="MinorSpoilerTags" aria-label="visualNovelMinorSpoilerTagsSelect" multiple>
+            <select id="visualNovelMinorSpoilerTagsSelect" asp-for="MinorSpoilerTags" class="form-select js-example-basic-multiple tags-selector" name="MinorSpoilerTags" aria-label="visualNovelMinorSpoilerTagsSelect" multiple>
             </select>
         </div>
 
         <div class="mb-3">
             <label id="tagsSelector" for="visualNovelMajorSpoilerTagsSelect" class="form-label">Теги визуальной новеллы с значительными спойлерами</label>
-            <select asp-for="MajorSpoilerTags" class="form-select js-example-basic-multiple tags-selector" name="MajorSpoilerTags" aria-label="visualNovelMajorSpoilerTagsSelect" multiple>
+            <select id="visualNovelMajorSpoilerTagsSelect" asp-for="MajorSpoilerTags" class="form-select js-example-basic-multiple tags-selector" name="MajorSpoilerTags" aria-label="visualNovelMajorSpoilerTagsSelect" multiple>
             </select>
         </div>
 
         <div class="mb-3">
-            <label for="visualNovelGenresSelect" class="form-label">Жанры визуальной новеллы</label>
-            <select asp-for="Genres" class="form-select js-example-basic-multiple" name="Genres" aria-label="visualNovelGenresSelect" multiple required>
+            <label for="visualNovelGenresSelectLabel" class="form-label">Жанры визуальной новеллы</label>
+            <select id="visualNovelGenresSelect" asp-for="Genres" class="form-select js-example-basic-multiple" name="Genres" aria-label="visualNovelGenresSelect" multiple required>
                 @{
                     foreach (Genre genre in ViewBag.Genres)
                     {
-                                                        <option value="@genre.Id">@genre.Name</option>
+                        <option value="@genre.Id">@genre.Name</option>
                     }
                 }
             </select>
         </div>
 
         <div class="mb-3">
-            <label for="visualNovelLanguagesSelect" class="form-label">Языки визуальной новеллы</label>
-            <select asp-for="Languages" class="form-select js-example-basic-multiple" name="Languages" aria-label="visualNovelLanguagesSelect" multiple required>
+            <label for="visualNovelLanguagesSelectLabel" class="form-label">Языки визуальной новеллы</label>
+            <select id="visualNovelLanguagesSelect" asp-for="Languages" class="form-select js-example-basic-multiple" name="Languages" aria-label="visualNovelLanguagesSelect" multiple required>
                 @{
                     foreach (Language lang in ViewBag.Languages)
                     {
-                                                        <option value="@lang.Id">@lang.Name</option>
+                        <option value="@lang.Id">@lang.Name</option>
                     }
                 }
             </select>
@@ -199,11 +305,11 @@
 
         <div class="mb-3">
             <label for="visualNovelGamingPlatformsSelect" class="form-label">Игровые платформы визуальной новеллы</label>
-            <select asp-for="Platforms" class="form-select js-example-basic-multiple gamingPlatform-selector" name="Platforms" aria-label="visualNovelGamingPlatformsSelect" multiple required>
+            <select id="visualNovelGamingPlatformsSelect" asp-for="Platforms" class="form-select js-example-basic-multiple gamingPlatform-selector" name="Platforms" aria-label="visualNovelGamingPlatformsSelect" multiple required>
                 @{
                     foreach (GamingPlatform gp in ViewBag.Platforms)
                     {
-                                                        <option value="@gp.Id">@gp.Name</option>
+                        <option value="@gp.Id">@gp.Name</option>
                     }
                 }
             </select>
@@ -213,241 +319,624 @@
 
         <div id="otherLinksInputs" class="mb-3"></div>
 
+        <div id="relatedAnimesInputs" class="mb-3"></div>
+
         <button id="addOtherLinkInputButton" type="button" onclick="addOtherLinkInput()" class="btn btn-warning mb-3">Добавить дополнительную ссылку</button>
+
+        <button id="addRelatedAnimeInputButton" type="button" onclick="addRelatedAnimeInput()" class="btn btn-warning mb-3">Добавить связанное аниме</button>
 
         <button type="submit" class="btn btn-primary mb-3">Добавить визуальную новеллу</button>
     </form>
-
-    <script>
-
-        var searchInput = document.getElementById("searchVNDB");
-
-        searchInput.addEventListener('change', function () {
-            var url = "/Home/VNDBSearch?search=" + searchInput.value;
-            var xhr = new XMLHttpRequest();
-            xhr.open("GET", url, true);
-            xhr.onreadystatechange = function () {
-                if (xhr.readyState === 4) {
-                    if (xhr.status === 200) {
-                        document.getElementById("searchVNDBResult").innerHTML = xhr.responseText;
-                        //alert.innerHTML = '';
-                    } else {
-                        
-                    }
-                }
-            };
-            xhr.send();
-        });;
-
-
-        window.addEventListener('load', function () {
-            document.querySelector('input[name="CoverImage"]').addEventListener('change', function () {
-                if (this.files && this.files[0]) {
-                    var img = document.getElementById('previewCoverImage');
-                    img.onload = () => {
-                        URL.revokeObjectURL(img.src);  // no longer needed, free memory
-                    }
-
-                    img.src = URL.createObjectURL(this.files[0]); // set src to blob url
-                    img.hidden = false;
-                }
-            });
-
-            document.getElementById('backgroundPreviewCheck').addEventListener('change', function () {
-                if (this.checked) {
-                    var img = document.getElementById('previewBackgroundImage');
-                    img.hidden = false;
-                } else {
-                    var img = document.getElementById('previewBackgroundImage');
-                    img.hidden = true;
-                }
-            });
-
-            document.querySelector('input[name="BackgroundImage"]').addEventListener('change', function () {
-                if (this.files && this.files[0]) {
-                    var img = document.getElementById('previewBackgroundImage');
-                    img.onload = () => {
-                        URL.revokeObjectURL(img.src);  // no longer needed, free memory
-                    }
-
-                    img.src = URL.createObjectURL(this.files[0]); // set src to blob url
-                }
-            });
-        });
-
-        // document.getElementById("visualNovelAddForm").addEventListener("submit", function (e) {
-        //     e.preventDefault();
-
-        //     var formData = new FormData(document.getElementById("visualNovelAddForm"));
-        //     output as an object
-        //     console.log(Object.fromEntries(formData));
-
-        //     ...or iterate through the name-value pairs
-        //     for (var pair of formData.entries()) {
-        //         console.log(pair[0] + ": " + pair[1]);
-        //     }
-        // });
-
-        $(document).ready(function () {
-            $('.js-example-basic-multiple').select2();
-            $('.js-example-basic-single').select2();
-        });
-
-        var $select2 = $(".tags-selector");
-
-        // Copy the options to all selects based on the first one
-        $(".tags-selector").html($select2.first().html());
-
-        // Initialize Select2
-        $select2.select2({
-            allowClear: true,
-            placeholder: "Select an option",
-            tags: true
-        });
-
-        $('.js-example-basic-multiple').select2();
-
-        $('.gamingPlatform-selector').on('select2:select', function (e) {
-            var container = document.getElementById('gamingPlatformInputs');
-            var gamingPlatformId = e.params.data.id;
-            var gamingPlatformName = e.params.data.text;
-            var inputGamingPlatformDiv = document.createElement('div');
-            inputGamingPlatformDiv.setAttribute("class", "mb-3");
-            inputGamingPlatformDiv.setAttribute("id", "inputGamingPlatformLinks-" + gamingPlatformId);
-            var label = document.createElement('label');
-            label.setAttribute("class", "form-label")
-            label.setAttribute("for", "visualNovelDownloadLinkGamingPlatformId")
-            label.textContent = "Ссылка на визуальную новеллу для " + gamingPlatformName;
-            inputGamingPlatformDiv.appendChild(label);
-            var idInput = document.createElement('input');
-            idInput.setAttribute("hidden", "true");
-            idInput.setAttribute("value", gamingPlatformId);
-            idInput.setAttribute("id", "visualNovelDownloadLinkGamingPlatformId");
-            idInput.setAttribute("asp-for", "DownloadLinkGamingPlatformId");
-            idInput.setAttribute("name", "DownloadLinkGamingPlatformId");
-            idInput.setAttribute("class", "form-control");
-            idInput.setAttribute("required", "true");
-            inputGamingPlatformDiv.appendChild(idInput);
-            var urlInput = document.createElement('input');
-            urlInput.setAttribute("id", "visualNovelDownloadLinkUrl");
-            urlInput.setAttribute("asp-for", "DownloadLinkUrl");
-            urlInput.setAttribute("name", "DownloadLinkUrl");
-            urlInput.setAttribute("class", "form-control");
-            urlInput.setAttribute("required", "true");
-            inputGamingPlatformDiv.appendChild(urlInput);
-            container.appendChild(inputGamingPlatformDiv);
-        });
-
-        $('.gamingPlatform-selector').on('select2:unselect', function (e) {
-            var gamingPlatformId = e.params.data.id;
-            var inputElem = document.getElementById('inputGamingPlatformLinks-' + gamingPlatformId);
-            inputElem.parentNode.removeChild(inputElem);
-        });
-
-        $('.tags-selector').on('select2:select', function (e) {
-            var selectedValue = e.params.data.id;
-
-            // Отключение выбранной опции во всех селектах
-            $('.tags-selector').not(this).find('option[value="' + selectedValue + '"]').prop('disabled', true);
-
-            // Обновление Select2 после изменений
-            $('.tags-selector').not(this).trigger('change');
-        });
-
-        // Обработка снятия выбора в любом из селектов
-        $('.tags-selector').on('select2:unselect', function (e) {
-            var unselectedValue = e.params.data.id;
-
-            // Включение опции во всех селектах
-            $('.tags-selector').not(this).find('option[value="' + unselectedValue + '"]').prop('disabled', false);
-
-            // Обновление Select2 после изменений
-            $('.tags-selector').not(this).trigger('change');
-        });
-
-        var otherLinksInputsCount = 0;
-
-        function removeInputContainerOfElement(elem) {
-            var container = elem.parentNode;
-            container.parentNode.removeChild(container);
-            otherLinksInputsCount--;
-            checkButtonAccessibility(); 
-        }
-
-        function checkButtonAccessibility() {
-            if (otherLinksInputsCount >= 8) {
-                var button = document.getElementById('addOtherLinkInputButton');
-
-                button.disabled = true;
-
-                button.textContent = "Максимум дополнительных ссылок"
-            } else {
-                var button = document.getElementById('addOtherLinkInputButton');
-
-                button.disabled = false;
-
-                button.textContent = "Добавить дополнительную ссылку"
-            }
-        }
-
-        function addOtherLinkInput() {
-            if (otherLinksInputsCount < 8) {    
-
-                var container = document.getElementById('otherLinksInputs');
-                var inputOtherLinkDiv = document.createElement('div');
-                inputOtherLinkDiv.setAttribute("class", "my-3 p-2");
-                inputOtherLinkDiv.setAttribute("id", "inputOtherLink");
-                var labelOtherLinkName = document.createElement('label');
-                labelOtherLinkName.setAttribute("class", "form-label");
-                labelOtherLinkName.setAttribute("for", "visualNovelOtherLinkName");
-                labelOtherLinkName.textContent = "Название ссылки";
-                inputOtherLinkDiv.appendChild(labelOtherLinkName);
-                var inputOtherLinkName = document.createElement('input');
-                inputOtherLinkName.setAttribute("id", "visualNovelOtherLinkName");
-                inputOtherLinkName.setAttribute("asf-for", "OtherLinkName");
-                inputOtherLinkName.setAttribute("name", "OtherLinkName");
-                inputOtherLinkName.setAttribute("class", "form-control");
-                inputOtherLinkName.setAttribute("required", "true");
-                inputOtherLinkDiv.appendChild(inputOtherLinkName);
-                var otherLinkNameHelp = document.createElement('div');
-                otherLinkNameHelp.setAttribute("id", "visualNovelOtherLinkNameHelp");
-                otherLinkNameHelp.setAttribute("class", "form-text");
-                otherLinkNameHelp.textContent = "Название ссылки, которая будет отображаться на странице новеллы.";
-                inputOtherLinkDiv.appendChild(otherLinkNameHelp);
-
-                var labelOtherLinkUrl = document.createElement('label');
-                labelOtherLinkUrl.setAttribute("class", "form-label");
-                labelOtherLinkUrl.setAttribute("for", "visualNovelOtherLinkUrl");
-                labelOtherLinkUrl.textContent = "Ссылка";
-                inputOtherLinkDiv.appendChild(labelOtherLinkUrl);
-                var inputOtherLinkUrl = document.createElement('input');
-                inputOtherLinkUrl.setAttribute("id", "visualNovelOtherLinkUrl");
-                inputOtherLinkUrl.setAttribute("asf-for", "OtherLinkUrl");
-                inputOtherLinkUrl.setAttribute("name", "OtherLinkUrl");
-                inputOtherLinkUrl.setAttribute("class", "form-control");
-                inputOtherLinkUrl.setAttribute("required", "true");
-                inputOtherLinkDiv.appendChild(inputOtherLinkUrl);
-                var otherLinkUrlHelp = document.createElement('div');
-                otherLinkUrlHelp.setAttribute("id", "visualNovelOtherLinkUrlHelp");
-                otherLinkUrlHelp.setAttribute("class", "form-text");
-                otherLinkUrlHelp.textContent = "Ссылка на дополнительный источник.";
-                inputOtherLinkDiv.appendChild(otherLinkUrlHelp);
-
-                var removeInputCardButton = document.createElement('button');
-                removeInputCardButton.setAttribute("id", "removeInputCard");
-                removeInputCardButton.setAttribute("onclick", "removeInputContainerOfElement(this)");
-                removeInputCardButton.setAttribute("class", "my-2 btn btn-danger");
-                removeInputCardButton.textContent = "Удалить";
-                inputOtherLinkDiv.appendChild(removeInputCardButton);
-
-                container.appendChild(inputOtherLinkDiv); 
-
-                otherLinksInputsCount++;
-
-                checkButtonAccessibility();
-
-            }  
-        }
-    </script>
 </div>
 
+<script>
+    var searchInput = document.getElementById("searchVNDBInput");
+
+    function searchOnVNDB(value) {
+        var url = "/Home/VNDBSearch?search=" + value;
+        var xhr = new XMLHttpRequest();
+        xhr.open("GET", url, true);
+        xhr.onreadystatechange = function () {
+            if (xhr.readyState === 4) {
+                if (xhr.status === 200) {
+                    document.getElementById("searchVNDBResult").innerHTML = xhr.responseText;
+                    //alert.innerHTML = '';
+                } else {
+
+                }
+            }
+        };
+        xhr.send();
+    }
+
+    function autoFillByVNDBId(id) {
+        var url = "/Home/VNDBGetDetails?id=" + id;
+        var xhr = new XMLHttpRequest();
+        xhr.open("GET", url, true);
+        xhr.onreadystatechange = function () {
+            if (xhr.readyState === 4) {
+                if (xhr.status === 200) {
+                    var responce = JSON.parse(xhr.responseText);
+                    console.log(responce);
+                    document.getElementById('visualNovelOriginalName').value = responce.title;
+                    var authorsSelect = document.getElementById('existedAuthorSelect');
+
+                    for (var i = 0; i < authorsSelect.options.length; i++) {
+                        var option = authorsSelect.options[i];
+                        option.selected = false;
+                        $('#existedAuthorSelect').trigger('change');
+                    }
+
+                    for (var i = 0; i < authorsSelect.options.length; i++) {
+                        var option = authorsSelect.options[i];
+                        for (var j = 0; j < responce.developers.length; j++) {
+                            if (option.innerText == responce.developers[j].name) {
+                                option.selected = true;
+                                $('#existedAuthorSelect').trigger('change');
+                                break;
+                            }
+                        }
+                    }
+
+                    document.getElementById('Status').options[responce.devstatus].selected = true;
+                    document.getElementById('ReadingTime').options[responce.length - 1].selected = true;
+                    document.getElementById('visualNovelReleaseYear').value = responce.released;
+                }
+            }
+        };
+        xhr.send();
+    }
+
+    // searchInput.addEventListener('change', function () {
+    //     var url = "/Home/VNDBSearch?search=" + searchInput.value;
+    //     var xhr = new XMLHttpRequest();
+    //     xhr.open("GET", url, true);
+    //     xhr.onreadystatechange = function () {
+    //         if (xhr.readyState === 4) {
+    //             if (xhr.status === 200) {
+    //                 document.getElementById("searchVNDBResult").innerHTML = xhr.responseText;
+    //                 //alert.innerHTML = '';
+    //             } else {
+
+    //             }
+    //         }
+    //     };
+    //     xhr.send();
+    // });;
+
+    var VNDBIDInput = document.getElementById('visualNovelVndbIdInput')
+    var searchVNDBButton = document.getElementById('searchVNDBButton')
+
+    VNDBIDInput.addEventListener('change', function () {
+        if (VNDBIDInput.value.length > 0) {
+            searchInput.disabled = true;
+            searchVNDBButton.disabled = true;
+        } else {
+            searchInput.disabled = false;
+            searchVNDBButton.disabled = false;
+        }
+    });;
+
+    window.addEventListener('load', function () {
+        document.querySelector('input[name="CoverImage"]').addEventListener('change', function () {
+            if (this.files && this.files[0]) {
+                var img = document.getElementById('previewCoverImage');
+                img.onload = () => {
+                    URL.revokeObjectURL(img.src);  // no longer needed, free memory
+                }
+
+                img.src = URL.createObjectURL(this.files[0]); // set src to blob url
+                img.hidden = false;
+            }
+        });
+
+        document.getElementById('backgroundPreviewCheck').addEventListener('change', function () {
+            if (this.checked) {
+                var img = document.getElementById('previewBackgroundImage');
+                img.hidden = false;
+            } else {
+                var img = document.getElementById('previewBackgroundImage');
+                img.hidden = true;
+            }
+        });
+
+        document.querySelector('input[name="BackgroundImage"]').addEventListener('change', function () {
+            if (this.files && this.files[0]) {
+                var img = document.getElementById('previewBackgroundImage');
+                img.onload = () => {
+                    URL.revokeObjectURL(img.src);  // no longer needed, free memory
+                }
+
+                img.src = URL.createObjectURL(this.files[0]); // set src to blob url
+            }
+        });
+    });
+
+    // document.getElementById("visualNovelAddForm").addEventListener("submit", function (e) {
+    //     e.preventDefault();
+
+    //     var formData = new FormData(document.getElementById("visualNovelAddForm"));
+    //     output as an object
+    //     console.log(Object.fromEntries(formData));
+
+    //     ...or iterate through the name-value pairs
+    //     for (var pair of formData.entries()) {
+    //         console.log(pair[0] + ": " + pair[1]);
+    //     }
+    // });
+
+    $(document).ready(function () {
+        $('.js-example-basic-multiple').select2();
+        $('.js-example-basic-single').select2();
+    });
+
+    $('#visualNovelRelatedNovelsSelect').select2({
+        ajax: {
+            url: '@Globals.API_URL' + 'VisualNovel/withRatingFiltred', // TODO
+            data: function (params) {
+                // Добавляем параметр page в запрос
+                var query = {
+                    search: params.term,
+                    Page: params.page || 1, // Select2 автоматически передает параметр page
+                    ItemsPerPage: 3
+                };
+                return query;
+            },
+            processResults: function (data, params) {
+                // Чтение заголовка x-pagination из ответа
+                var pagination = params.page || 1;
+                var totalPages = data.length;
+
+                return {
+                    results: data.map(function (item) {
+                        return {
+                            id: item.visualNovel.id, // значение для select
+                            text: item.visualNovel.title // текст, который будет отображен в выпадающем списке
+                        };
+                    }),
+                    pagination: {
+                        more: pagination < totalPages // проверка, есть ли еще результаты
+                    }
+                };
+            }
+        },
+
+        language: {
+            inputTooShort: function () {
+                return "Введите хотя бы один символ";
+            }
+        },
+
+        placeholder: 'Поиск визуальной новеллы',
+        minimumInputLength: 1
+    });
+
+    var $select2 = $(".tags-selector");
+
+    // Copy the options to all selects based on the first one
+    $(".tags-selector").html($select2.first().html());
+
+    // Initialize Select2
+    $select2.select2({
+        allowClear: true,
+        placeholder: "Select an option",
+        tags: true
+    });
+
+    $('.js-example-basic-multiple').select2();
+
+    $('.gamingPlatform-selector').on('select2:select', function (e) {
+        var container = document.getElementById('gamingPlatformInputs');
+        var gamingPlatformId = e.params.data.id;
+        var gamingPlatformName = e.params.data.text;
+        var inputGamingPlatformDiv = document.createElement('div');
+        inputGamingPlatformDiv.setAttribute("class", "mb-3");
+        inputGamingPlatformDiv.setAttribute("id", "inputGamingPlatformLinks-" + gamingPlatformId);
+        var label = document.createElement('label');
+        label.setAttribute("class", "form-label")
+        label.setAttribute("for", "visualNovelDownloadLinkGamingPlatformId")
+        label.textContent = "Ссылка на визуальную новеллу для " + gamingPlatformName;
+        inputGamingPlatformDiv.appendChild(label);
+        var idInput = document.createElement('input');
+        idInput.setAttribute("hidden", "true");
+        idInput.setAttribute("value", gamingPlatformId);
+        idInput.setAttribute("id", "visualNovelDownloadLinkGamingPlatformId");
+        idInput.setAttribute("asp-for", "DownloadLinkGamingPlatformId");
+        idInput.setAttribute("name", "DownloadLinkGamingPlatformId");
+        idInput.setAttribute("class", "form-control");
+        idInput.setAttribute("required", "true");
+        inputGamingPlatformDiv.appendChild(idInput);
+        var urlInput = document.createElement('input');
+        urlInput.setAttribute("id", "visualNovelDownloadLinkUrl");
+        urlInput.setAttribute("asp-for", "DownloadLinkUrl");
+        urlInput.setAttribute("name", "DownloadLinkUrl");
+        urlInput.setAttribute("class", "form-control");
+        urlInput.setAttribute("required", "true");
+        inputGamingPlatformDiv.appendChild(urlInput);
+        container.appendChild(inputGamingPlatformDiv);
+    });
+
+    $('.gamingPlatform-selector').on('select2:unselect', function (e) {
+        var gamingPlatformId = e.params.data.id;
+        var inputElem = document.getElementById('inputGamingPlatformLinks-' + gamingPlatformId);
+        inputElem.parentNode.removeChild(inputElem);
+    });
+
+    $('.tags-selector').on('select2:select', function (e) {
+        var selectedValue = e.params.data.id;
+
+        // Отключение выбранной опции во всех селектах
+        $('.tags-selector').not(this).find('option[value="' + selectedValue + '"]').prop('disabled', true);
+
+        // Обновление Select2 после изменений
+        $('.tags-selector').not(this).trigger('change');
+    });
+
+    // Обработка снятия выбора в любом из селектов
+    $('.tags-selector').on('select2:unselect', function (e) {
+        var unselectedValue = e.params.data.id;
+
+        // Включение опции во всех селектах
+        $('.tags-selector').not(this).find('option[value="' + unselectedValue + '"]').prop('disabled', false);
+
+        // Обновление Select2 после изменений
+        $('.tags-selector').not(this).trigger('change');
+    });
+
+    var otherLinksInputsCount = 0;
+    var anotherTitleLinksInputCount = 0;
+    var relatedAnimesInputCount = 0;
+
+    function removeOtherLinkInputContainer(elem) {
+        var container = elem.parentNode;
+        container.parentNode.removeChild(container);
+        otherLinksInputsCount--;
+        checkOtherLinkButtonAccessibility();
+    }
+
+    function removeAnotherTitleInputContaiter(elem) {
+        var container = elem.parentNode;
+        container.parentNode.removeChild(container);
+        anotherTitleLinksInputCount--;
+        checkAnotherTitleButtonAccessibility();
+    }
+
+    function removeRelatedAnimeInputContainer(elem) {
+        var container = elem.parentNode;
+        container.parentNode.removeChild(container);
+        relatedAnimesInputCount--;
+        checkRelatedAnimeButtonAccessibility();
+    }
+
+    function checkOtherLinkButtonAccessibility() {
+        if (otherLinksInputsCount >= 8) {
+            var button = document.getElementById('addOtherLinkInputButton');
+
+            button.disabled = true;
+
+            button.textContent = "Максимум дополнительных ссылок"
+        } else {
+            var button = document.getElementById('addOtherLinkInputButton');
+
+            button.disabled = false;
+
+            button.textContent = "Добавить дополнительную ссылку"
+        }
+    }
+
+    function checkAnotherTitleButtonAccessibility() {
+        if (anotherTitleLinksInputCount >= 5) {
+            var button = document.getElementById('addAnotherTitleInputButton');
+
+            button.disabled = true;
+
+            button.textContent = "Максимум дополнительных названий"
+        } else {
+            var button = document.getElementById('addAnotherTitleInputButton');
+
+            button.disabled = false;
+
+            button.textContent = "Добавить дополнительное название"
+        }
+    }
+
+    function checkRelatedAnimeButtonAccessibility() {
+        if (relatedAnimesInputCount >= 5) {
+            var button = document.getElementById('addRelatedAnimeInputButton');
+
+            button.disabled = true;
+
+            button.textContent = "Максимум связанных аниме"
+        } else {
+            var button = document.getElementById('addRelatedAnimeInputButton');
+
+            button.disabled = false;
+
+            button.textContent = "Добавить связанное аниме"
+        }
+    }
+
+    function addAnotherTitleInput() {
+        if (anotherTitleLinksInputCount < 5) {
+            var container = document.getElementById('anotherTitleInputs');
+            var inputAnotherTitleLinkDiv = document.createElement('div');
+            inputAnotherTitleLinkDiv.setAttribute("class", "my-3 p-2");
+            inputAnotherTitleLinkDiv.setAttribute("id", "inputAnotherTitle");
+            var labelAnotherTitleLinkName = document.createElement('label');
+            labelAnotherTitleLinkName.setAttribute("class", "form-label");
+            labelAnotherTitleLinkName.setAttribute("for", "AnotherTitles");
+            labelAnotherTitleLinkName.textContent = "Дополнительное название";
+            inputAnotherTitleLinkDiv.appendChild(labelAnotherTitleLinkName);
+            var inputAnotherTitleLinkName = document.createElement('input');
+            inputAnotherTitleLinkName.setAttribute("id", "visualNovelAnotherTitle");
+            inputAnotherTitleLinkName.setAttribute("asf-for", "AnotherTitles");
+            inputAnotherTitleLinkName.setAttribute("name", "AnotherTitles");
+            inputAnotherTitleLinkName.setAttribute("class", "form-control");
+            inputAnotherTitleLinkName.setAttribute("required", "true");
+            inputAnotherTitleLinkDiv.appendChild(inputAnotherTitleLinkName);
+
+            var removeInputCardButton = document.createElement('button');
+            removeInputCardButton.setAttribute("id", "removeInputCard");
+            removeInputCardButton.setAttribute("onclick", "removeAnotherTitleInputContaiter(this)");
+            removeInputCardButton.setAttribute("class", "my-2 btn btn-danger");
+            removeInputCardButton.textContent = "Удалить";
+            inputAnotherTitleLinkDiv.appendChild(removeInputCardButton);
+
+            container.appendChild(inputAnotherTitleLinkDiv);
+
+            anotherTitleLinksInputCount++;
+
+            checkAnotherTitleButtonAccessibility();
+        }
+    }
+
+    function addOtherLinkInput() {
+        if (otherLinksInputsCount < 8) {
+
+            var container = document.getElementById('otherLinksInputs');
+            var title = document.createElement('h3');
+            title.textContent = "Дополнительная ссылка";
+            var inputOtherLinkDiv = document.createElement('div');
+            inputOtherLinkDiv.setAttribute("class", "my-3 p-2");
+            inputOtherLinkDiv.setAttribute("id", "inputOtherLink");
+            inputOtherLinkDiv.appendChild(title);
+            var labelOtherLinkName = document.createElement('label');
+            labelOtherLinkName.setAttribute("class", "form-label");
+            labelOtherLinkName.setAttribute("for", "visualNovelOtherLinkName");
+            labelOtherLinkName.textContent = "Название ссылки";
+            inputOtherLinkDiv.appendChild(labelOtherLinkName);
+            var inputOtherLinkName = document.createElement('input');
+            inputOtherLinkName.setAttribute("id", "visualNovelOtherLinkName");
+            inputOtherLinkName.setAttribute("asf-for", "OtherLinkName");
+            inputOtherLinkName.setAttribute("name", "OtherLinkName");
+            inputOtherLinkName.setAttribute("class", "form-control");
+            inputOtherLinkName.setAttribute("required", "true");
+            inputOtherLinkDiv.appendChild(inputOtherLinkName);
+            var otherLinkNameHelp = document.createElement('div');
+            otherLinkNameHelp.setAttribute("id", "visualNovelOtherLinkNameHelp");
+            otherLinkNameHelp.setAttribute("class", "form-text");
+            otherLinkNameHelp.textContent = "Название ссылки, которая будет отображаться на странице новеллы.";
+            inputOtherLinkDiv.appendChild(otherLinkNameHelp);
+
+            var labelOtherLinkUrl = document.createElement('label');
+            labelOtherLinkUrl.setAttribute("class", "form-label");
+            labelOtherLinkUrl.setAttribute("for", "visualNovelOtherLinkUrl");
+            labelOtherLinkUrl.textContent = "Ссылка";
+            inputOtherLinkDiv.appendChild(labelOtherLinkUrl);
+            var inputOtherLinkUrl = document.createElement('input');
+            inputOtherLinkUrl.setAttribute("id", "visualNovelOtherLinkUrl");
+            inputOtherLinkUrl.setAttribute("asf-for", "OtherLinkUrl");
+            inputOtherLinkUrl.setAttribute("name", "OtherLinkUrl");
+            inputOtherLinkUrl.setAttribute("class", "form-control");
+            inputOtherLinkUrl.setAttribute("required", "true");
+            inputOtherLinkDiv.appendChild(inputOtherLinkUrl);
+            var otherLinkUrlHelp = document.createElement('div');
+            otherLinkUrlHelp.setAttribute("id", "visualNovelOtherLinkUrlHelp");
+            otherLinkUrlHelp.setAttribute("class", "form-text");
+            otherLinkUrlHelp.textContent = "Ссылка на дополнительный источник.";
+            inputOtherLinkDiv.appendChild(otherLinkUrlHelp);
+
+            var removeInputCardButton = document.createElement('button');
+            removeInputCardButton.setAttribute("id", "removeInputCard");
+            removeInputCardButton.setAttribute("onclick", "removeOtherLinkInputContainer(this)");
+            removeInputCardButton.setAttribute("class", "my-2 btn btn-danger");
+            removeInputCardButton.textContent = "Удалить";
+            inputOtherLinkDiv.appendChild(removeInputCardButton);
+
+            container.appendChild(inputOtherLinkDiv);
+
+            otherLinksInputsCount++;
+
+            checkOtherLinkButtonAccessibility();
+        }
+    }
+
+    function addRelatedAnimeInput() {
+        if (relatedAnimesInputCount < 5) {
+            var container = document.getElementById('relatedAnimesInputs');
+            var title = document.createElement('h3');
+            title.textContent = "Связанное аниме";
+            var inputRelatedAnimeDiv = document.createElement('div');
+            inputRelatedAnimeDiv.setAttribute("class", "my-3 p-2");
+            inputRelatedAnimeDiv.setAttribute("id", "inputRelatedAnime");
+            inputRelatedAnimeDiv.appendChild(title);
+            var labelRelatedAnimeName = document.createElement('label');
+            labelRelatedAnimeName.setAttribute("class", "form-label");
+            labelRelatedAnimeName.setAttribute("for", "RelatedAnimeLinkName");
+            labelRelatedAnimeName.textContent = "Название ссылки";
+            inputRelatedAnimeDiv.appendChild(labelRelatedAnimeName);
+            var inputRelatedAnimeName = document.createElement('input');
+            inputRelatedAnimeName.setAttribute("id", "visualNovelRelatedAnimeLinkName");
+            inputRelatedAnimeName.setAttribute("asf-for", "RelatedAnimeLinkName");
+            inputRelatedAnimeName.setAttribute("name", "RelatedAnimeLinkName");
+            inputRelatedAnimeName.setAttribute("class", "form-control");
+            inputRelatedAnimeName.setAttribute("required", "true");
+            inputRelatedAnimeDiv.appendChild(inputRelatedAnimeName);
+            var relatedAnimeNameHelp = document.createElement('div');
+            relatedAnimeNameHelp.setAttribute("id", "visualNovelRelatedAnimeNameHelp");
+            relatedAnimeNameHelp.setAttribute("class", "form-text");
+            relatedAnimeNameHelp.textContent = "Название ссылки, которая будет отображаться на странице новеллы (Желательно название аниме).";
+            inputRelatedAnimeDiv.appendChild(relatedAnimeNameHelp);
+
+            var labelRelatedAnimeUrl = document.createElement('label');
+            labelRelatedAnimeUrl.setAttribute("class", "form-label");
+            labelRelatedAnimeUrl.setAttribute("for", "RelatedAnimeLinkUrl");
+            labelRelatedAnimeUrl.textContent = "Ссылка";
+            inputRelatedAnimeDiv.appendChild(labelRelatedAnimeUrl);
+            var inputRelatedAnimeLinkUrl = document.createElement('input');
+            inputRelatedAnimeLinkUrl.setAttribute("id", "visualNovelRelatedAnimeLinkUrl");
+            inputRelatedAnimeLinkUrl.setAttribute("asf-for", "RelatedAnimeLinkUrl");
+            inputRelatedAnimeLinkUrl.setAttribute("name", "RelatedAnimeLinkUrl");
+            inputRelatedAnimeLinkUrl.setAttribute("class", "form-control");
+            inputRelatedAnimeLinkUrl.setAttribute("required", "true");
+            inputRelatedAnimeDiv.appendChild(inputRelatedAnimeLinkUrl);
+            var relatedAnimeUrlHelp = document.createElement('div');
+            relatedAnimeUrlHelp.setAttribute("id", "visualNovelReladedAnimeLinkUrlHelp");
+            relatedAnimeUrlHelp.setAttribute("class", "form-text");
+            relatedAnimeUrlHelp.textContent = "Ссылка на аниме (Желательно популярный источник, например: jut.su, animego.org).";
+            inputRelatedAnimeDiv.appendChild(relatedAnimeUrlHelp);
+
+            var removeInputCardButton = document.createElement('button');
+            removeInputCardButton.setAttribute("id", "removeInputCard");
+            removeInputCardButton.setAttribute("onclick", "removeRelatedAnimeInputContainer(this)");
+            removeInputCardButton.setAttribute("class", "my-2 btn btn-danger");
+            removeInputCardButton.textContent = "Удалить";
+            inputRelatedAnimeDiv.appendChild(removeInputCardButton);
+
+            container.appendChild(inputRelatedAnimeDiv);
+
+            relatedAnimesInputCount++;
+
+            checkRelatedAnimeButtonAccessibility();
+
+        }
+    }
+
+    function changeVNDBIdValue(elem) {
+        var vndbSearchResult = document.getElementById('searchVNDBResult');
+
+        var VNDBIdValueInput = document.getElementById('visualNovelVndbIdInput');
+
+        VNDBIdValueInput.value = elem.id;
+
+        VNDBIdValueInput.dispatchEvent(new Event('change'));
+
+        vndbSearchResult.removeChild(vndbSearchResult.lastChild);
+    }
+
+</script>
+
+<script>
+    const imgInputHelper = document.getElementById("add-single-img");
+    const imgInputHelperLabel = document.getElementById("add-img-label");
+    const imgContainer = document.querySelector(".custom__image-container");
+    let imgFiles = [];
+
+    const addImageHandler = async () => {
+        const files = imgInputHelper.files;
+        if (!files) return;
+
+        for (let i = 0; i < files.length; i++) {
+            await addImage(files[i]);
+        }
+        imgInputHelper.value = "";
+    };
+
+    const addImage = (file) => {
+        return new Promise((resolve) => {
+            const fileIndex = imgFiles.length;
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => {
+                const imgWrapper = document.createElement("div");
+                imgWrapper.className = "img-wrapper";
+                imgWrapper.setAttribute('data-index', fileIndex);
+
+                const newImg = document.createElement("img");
+                newImg.src = reader.result;
+                imgWrapper.appendChild(newImg);
+
+                const deleteBtn = document.createElement("button");
+                deleteBtn.className = "delete-btn";
+                deleteBtn.innerHTML = "X";
+                deleteBtn.addEventListener("click", () => {
+                    const index = parseInt(imgWrapper.getAttribute('data-index'));
+                    imgFiles.splice(index, 1);
+                    imgContainer.removeChild(imgWrapper);
+                    updateImagePositions();
+                });
+                imgWrapper.appendChild(deleteBtn);
+
+                const moveUpBtn = document.createElement("a");
+                moveUpBtn.setAttribute("role", "button");
+                moveUpBtn.className = "move-up-btn";
+                moveUpBtn.innerHTML = "←";
+                moveUpBtn.addEventListener("click", () => {
+                    const index = parseInt(imgWrapper.getAttribute('data-index'));
+                    if (index > 0) {
+                        [imgFiles[index], imgFiles[index - 1]] = [imgFiles[index - 1], imgFiles[index]];
+                        imgContainer.insertBefore(imgWrapper, imgContainer.children[index - 1]);
+                        updateImagePositions();
+                    }
+                });
+                imgWrapper.appendChild(moveUpBtn);
+
+                const moveDownBtn = document.createElement("a");
+                moveDownBtn.setAttribute("role", "button");
+                moveDownBtn.className = "move-down-btn";
+                moveDownBtn.innerHTML = "→";
+                moveDownBtn.addEventListener("click", () => {
+                    const index = parseInt(imgWrapper.getAttribute('data-index'));
+                    if (index < imgFiles.length - 1) {
+                        [imgFiles[index], imgFiles[index + 1]] = [imgFiles[index + 1], imgFiles[index]];
+                        imgContainer.insertBefore(imgWrapper, imgContainer.children[index + 2]);
+                        updateImagePositions();
+                    }
+                });
+
+                imgWrapper.appendChild(moveDownBtn);
+
+                imgContainer.insertBefore(imgWrapper, imgInputHelperLabel);
+
+                imgFiles.push(file);
+                updateImagePositions();
+                resolve();
+            };
+        });
+    };
+
+    imgInputHelper.addEventListener("change", addImageHandler);
+
+    const getImgFileList = () => {
+        const imgFilesHelper = new DataTransfer();
+        imgFiles.forEach((imgFile) => {
+            if (imgFile instanceof File) {
+                imgFilesHelper.items.add(imgFile);
+            }
+        });
+        return imgFilesHelper.files;
+    };
+
+    document.querySelector("#visualNovelAddForm").addEventListener("submit", function () {
+        const firstImgInput = document.getElementById("image-input");
+        firstImgInput.files = getImgFileList();
+        console.log("executed");
+    });
+
+    const updateImagePositions = () => {
+        const imgWrappers = document.querySelectorAll('.img-wrapper');
+        imgWrappers.forEach((wrapper, index) => {
+            const upBtn = wrapper.querySelector('.move-up-btn');
+            const downBtn = wrapper.querySelector('.move-down-btn');
+
+            wrapper.setAttribute('data-index', index);
+            upBtn.style.display = index === 0 ? 'none' : 'block';
+            downBtn.style.display = index === imgWrappers.length - 1 ? 'none' : 'block';
+        });
+    };
+</script>
+
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

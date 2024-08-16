@@ -1,26 +1,73 @@
 ﻿@using Microsoft.AspNetCore.Identity
-@inject SignInManager<IdentityUser> SignInManager
-@inject UserManager<IdentityUser> UserManager
+@using NovelSite.Data.Identity;
+@inject SignInManager<ApplicationIdentityUser> SignInManager
+@inject UserManager<ApplicationIdentityUser> UserManager
+@{
+    var avatarUrl = string.Empty;
+    var username = string.Empty;
+    if (SignInManager.IsSignedIn(User))
+    {
+        var user = await UserManager.GetUserAsync(User);
+        if (user != null)
+        {
+            avatarUrl = user.AvatarFileName;
+            username = user.UserName;
+        }
+    }
+}
 
-<ul class="navbar-nav">
 @if (SignInManager.IsSignedIn(User))
 {
-    <li class="nav-item">
-        <a  class="nav-link text-dark" asp-area="Identity" asp-page="/Account/Manage/Index" title="Manage">Hello @User.Identity?.Name</a>
-    </li>
-    <li class="nav-item">
-        <form  class="form-inline" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Action("Index", "Home", new { area = "" })">
-            <button  type="submit" class="nav-link btn btn-link text-dark">Logout</button>
-        </form>
-    </li>
+    <a class="nav-link" asp-controller="Profile" asp-action="Index" asp-route-username="@username">Профиль</a>
+    <a class="nav-link" asp-area="Identity" asp-page="/Account/Manage/Index">Настройки</a>
+    <form class="form-inline nav-link" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Action("Index", "Home", new { area = "" })">
+        <button type="submit" class="nav-link btn btn-link">Выйти</button>
+    </form>
 }
 else
 {
-    <li class="nav-item">
-        <a class="nav-link text-dark" asp-area="Identity" asp-page="/Account/Register">Register</a>
-    </li>
-    <li class="nav-item">
-        <a class="nav-link text-dark" asp-area="Identity" asp-page="/Account/Login">Login</a>
-    </li>
+    <a class="nav-link" asp-area="Identity" asp-page="/Account/Register">Регистрация</a>
+    <a class="nav-link" asp-area="Identity" asp-page="/Account/Login">Войти</a>
 }
-</ul>
+
+
+
+@* <ul class="navbar-nav">
+    @if (SignInManager.IsSignedIn(User))
+    {
+        <li class="nav-item">
+            @* <a class="nav-link" asp-area="Identity" asp-page="/Account/Manage/Index" title="Manage">Hello @User.Identity?.Name</a>
+            @if (!string.IsNullOrEmpty(avatarUrl))
+            {
+            <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" href="#" id="navbarDarkDropdownMenuLink" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    <img src="@avatarUrl" alt="Avatar" class="nav-rounded-profile-image" />
+                </a>
+                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDarkDropdownMenuLink">
+                    <li><a class="nav-link d-flex justify-content-center" asp-controller="Profile" asp-action="Index" asp-route-username="@username">Профиль</a></li>
+                    <li><a class="nav-link d-flex justify-content-center" asp-area="Identity" asp-page="/Account/Manage/Index">Настройки</a></li>
+                    <li>
+                        <form class="form-inline d-flex justify-content-center" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Action("Index", "Home", new { area = "" })">
+                            <button type="submit" class="nav-link btn btn-link">Выйти</button>
+                        </form>
+                    </li>
+                </ul>
+            </li>
+            }
+        </li>
+         <li class="nav-item">
+    <form class="form-inline" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Action("Index", "Home", new { area = "" })">
+    <button type="submit" class="nav-link btn btn-link">Logout</button>
+    </form>
+    </li>
+    }
+    else
+    {
+        <li class="nav-item">
+            <a class="nav-link" asp-area="Identity" asp-page="/Account/Register">Register</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" asp-area="Identity" asp-page="/Account/Login">Login</a>
+        </li>
+    }
+</ul> *@

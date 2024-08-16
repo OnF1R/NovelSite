@@ -1,0 +1,453 @@
+﻿@using NovelSite.Models.Novel;
+
+@{
+    ViewData["Title"] = "Визуальные новеллы";
+
+    ViewData["Title"] = "Визуальные новеллы на русском языке";
+    ViewData["MetaDescription"] = "Визуальные новеллы на русском языке - Astral Novel";
+    ViewData["MetaKeywords"] = "Визуальные новеллы, Новеллы, Русский язык, Скачать визуальные новеллы";
+
+    // Open Graph tags
+    ViewData["OgTitle"] = "Визуальные новеллы на русском языке - Новеллы";
+    ViewData["OgDescription"] = "Визуальные новеллы на русском языке, скачать визуальные новеллы";
+    //ViewData["OgImage"] = $"https://2f58d602-2c33-481e-875b-700b4d4b3263.selstorage.ru/{topVNDB.Result[0].VisualNovel.CoverImageLink}"; // TODO
+    ViewData["OgUrl"] = Globals.GetFullUrl(Context);
+}
+
+<div class="text-center">
+    <div class="d-flex justify-content-between">
+        <select id="sortSelect" class="vn-select" aria-label="Visual novel sort select">
+            <option value="@Sort.DateUpdatedDescending" selected>Дата обновления (Сначала новые)</option>
+            <option value="@Sort.DateUpdatedAscending">Дата обновления (Сначала старые)</option>
+            <option value="@Sort.DateAddedDescending">Дата добавления (Сначала новые)</option>
+            <option value="@Sort.DateAddedAscending">Дата добавления (Сначала старые)</option>
+            <option value="@Sort.RatingDescending">Рейтинг (По убыванию)</option>
+            <option value="@Sort.RatingAscending">Рейтинг (По возрастанию)</option>
+            <option value="@Sort.VoteCountDescending">Количество оценок (По убыванию)</option>
+            <option value="@Sort.VoteCountAscending">Количество оценок (По возрастанию)</option>
+            <option value="@Sort.VNDBRatingDescending">Рейтинг VNDB (По убыванию)</option>
+            <option value="@Sort.VNDBRatingAscending">Рейтинг VNDB (По возрастанию)</option>
+            <option value="@Sort.VNDBVoteCountDescending">Количество оценок VNDB (По убыванию)</option>
+            <option value="@Sort.VNDBVoteCountAscending">Количество оценок VNDB (По возрастанию)</option>
+            <option value="@Sort.ReleaseDateDescending">Дата выхода (Сначала новые)</option>
+            <option value="@Sort.ReleaseDateAscending">Дата выхода (Сначала старые)</option>
+            <option value="@Sort.Title">Название</option>
+        </select>
+        <button class="btn btn-primary" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFilter" aria-expanded="false" aria-controls="collapseFilter">
+            Фильтры
+        </button>
+    </div>
+    <div class="collapse" id="collapseFilter">
+        <div class="vn-page p-3 mt-3">
+            @await Html.PartialAsync("_VisualNovelFiltersPartial")
+        </div>
+    </div>
+    <div class="d-flex justify-content-center mt-2" id="liveAlertPlaceholder"></div>
+    <div class="row g-2 d-flex justify-content-center flex-wrap" id="visualNovelContentContainer"></div>
+</div>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const urlParams = new URLSearchParams(window.location.search);
+        let page = parseInt(urlParams.get('page')) || 1;
+        const filters = {
+            tags: urlParams.get('tags') || '',
+            genres: urlParams.get('genres') || '',
+            //authors: urlParams.get('authors') || '',
+            //translators: urlParams.get('translators') || '',
+            languages: urlParams.get('languages') || '',
+            platforms: urlParams.get('platforms') || '',
+            spoilerLevel: urlParams.get('spoilerLevel') || 'None',
+            readingTime: urlParams.get('readingTime') || 'Any',
+            sort: urlParams.get('sort') || 'DateUpdatedDescending',
+            search: urlParams.get('search') || ''
+        };
+
+        setFilters(filters);
+        changePage(page, filters);
+
+        window.onpopstate = function (event) {
+            if (event.state && event.state.page) {
+                page = event.state.page;
+                console.log(event.state.filters)
+                // setFilters(event.state.filters);
+                changePage(page, event.state.filters, false);
+            }
+        };
+
+        var tagSearchInput = document.getElementById('tagSearch');
+        var tagItems = document.querySelectorAll('.dropdown-menu-tag .dropdown-item-tag');
+
+        var genreSearchInput = document.getElementById('genreSearch');
+        var genreItems = document.querySelectorAll('.dropdown-menu-genre .dropdown-item-genre');
+
+        var languageSearchInput = document.getElementById('languageSearch');
+        var languageItems = document.querySelectorAll('.dropdown-menu-language .dropdown-item-language');
+
+        var platformSearchInput = document.getElementById('platformSearch');
+        var platformItems = document.querySelectorAll('.dropdown-menu-platform .dropdown-item-platform');
+
+        tagSearchInput.addEventListener('input', function () {
+            var searchTermTag = tagSearchInput.value.toLowerCase();
+
+            tagItems.forEach(function (tagItem) {
+                var tagText = tagItem.querySelector('span').textContent.toLowerCase();
+                if (tagText.includes(searchTermTag)) {
+                    tagItem.style.display = 'block';
+                } else {
+                    tagItem.style.display = 'none';
+                }
+            });
+        });
+
+        genreSearchInput.addEventListener('input', function () {
+            var searchTermGenre = genreSearchInput.value.toLowerCase();
+
+            genreItems.forEach(function (genreItem) {
+                var genreText = genreItem.querySelector('span').textContent.toLowerCase();
+                if (genreText.includes(searchTermGenre)) {
+                    genreItem.style.display = 'block';
+                } else {
+                    genreItem.style.display = 'none';
+                }
+            });
+        });
+
+        languageSearchInput.addEventListener('input', function () {
+            var searchTermLanguage = languageSearchInput.value.toLowerCase();
+
+            languageItems.forEach(function (languageItem) {
+                var languageText = languageItem.querySelector('span').textContent.toLowerCase();
+                if (languageText.includes(searchTermLanguage)) {
+                    languageItem.style.display = 'block';
+                } else {
+                    languageItem.style.display = 'none';
+                }
+            });
+        });
+
+        platformSearchInput.addEventListener('input', function () {
+            var searchTermPlatform = platformSearchInput.value.toLowerCase();
+
+            platformItems.forEach(function (platformItem) {
+                var platformText = platformItem.querySelector('span').textContent.toLowerCase();
+                if (platformText.includes(searchTermPlatform)) {
+                    platformItem.style.display = 'block';
+                } else {
+                    platformItem.style.display = 'none';
+                }
+            });
+        });
+
+        if (document.querySelector('.radioSpoilerLevel')) {
+            document.querySelectorAll('.radioSpoilerLevel').forEach(function (label) {
+                label.addEventListener('click', function (event) {
+                    event.stopPropagation();
+                });
+            });
+        }
+
+        if (document.querySelector('.dropdown-menu .dropdown-item')) {
+            document.querySelectorAll('.dropdown-menu .dropdown-item').forEach(function (label) {
+                label.addEventListener('click', function (event) {
+                    event.stopPropagation(); // Предотвращаем закрытие выпадающего меню при клике на чекбокс
+                    var checkbox = this.querySelector('input[type="checkbox"]');
+                    checkbox.checked = !checkbox.checked; // Изменяем состояние чекбокса
+                    checkbox.dispatchEvent(new Event('change')); // Генерируем событие change
+                });
+            });
+        }
+
+        if (document.querySelector('.dropdown-menu .dropdown-item input[type="checkbox"]')) {
+            document.querySelectorAll('.dropdown-menu .dropdown-item input[type="checkbox"]').forEach(function (checkbox) {
+                checkbox.addEventListener('change', function () {
+                    var states = ['none', 'include', 'exclude'];
+                    var currentState = states.indexOf(this.getAttribute('data-state'));
+                    var nextState = (currentState + 1) % states.length;
+                    this.setAttribute('data-state', states[nextState]);
+
+                    // Добавляем или удаляем класс included или excluded для стилизации чекбокса
+                    if (states[nextState] === 'include') {
+                        this.parentElement.classList.add('checked');
+                        this.parentElement.classList.remove('excluded');
+                    } else if (states[nextState] === 'exclude') {
+                        this.parentElement.classList.remove('checked');
+                        this.parentElement.classList.add('excluded');
+                    } else {
+                        this.parentElement.classList.remove('checked');
+                        this.parentElement.classList.remove('excluded');
+                    }
+                });
+            });
+        }
+
+        if (document.querySelector('.btn-primary-submit-filter')) {
+
+            var tags = [];
+            var excludeTags = [];
+            var genres = [];
+            var excludeGenres = [];
+            var languages = [];
+            var excludeLanguages = [];
+            var platforms = [];
+            var excludePlatforms = [];
+
+            var resetButton = document.getElementById('resetFilter');
+
+            resetButton.addEventListener('click', function (event) {
+                event.preventDefault();
+                document.querySelectorAll('input[name="tags"]').forEach(function (tag) {
+                    var tagName = tag.value;
+                    var states = ['none', 'include', 'exclude'];
+                    tag.setAttribute('data-state', states[0]);
+                    tag.parentElement.classList.remove('checked');
+                    tag.parentElement.classList.remove('excluded');
+                    tags.length = 0;
+                    excludeTags.length = 0;
+                });
+
+                document.querySelectorAll('input[name="genres"]').forEach(function (genre) {
+                    var genreName = genre.value;
+                    var states = ['none', 'include', 'exclude'];
+                    genre.setAttribute('data-state', states[0]);
+                    genre.parentElement.classList.remove('checked');
+                    genre.parentElement.classList.remove('excluded');
+                    genres.length = 0;
+                    excludeGenres = 0;
+                });
+
+                document.querySelectorAll('input[name="languages"]').forEach(function (language) {
+                    var languageName = language.value;
+                    var states = ['none', 'include', 'exclude'];
+                    language.setAttribute('data-state', states[0]);
+                    language.parentElement.classList.remove('checked');
+                    language.parentElement.classList.remove('excluded');
+                    languages.length = 0;
+                    excludeLanguages.length = 0;
+                });
+
+                document.querySelectorAll('input[name="platforms"]').forEach(function (platform) {
+
+                    var platformName = platform.value;
+                    var states = ['none', 'include', 'exclude'];
+                    platform.setAttribute('data-state', states[0]);
+                    platform.parentElement.classList.remove('checked');
+                    platform.parentElement.classList.remove('excluded');
+                    platforms.length = 0;
+                    excludePlatforms.length = 0;
+                });
+
+                var spoilerLevelRadio = document.getElementsByName('spoilerLevelCheck');
+                spoilerLevelRadio[0].checked = true;
+                spoilerLevel = spoilerLevelRadio[0].value
+
+                var readingTimeSelect = document.getElementById('readingTimeSelect');
+                readingTimeSelect.value = readingTimeSelect.options[0].value;
+                readingTime = readingTimeSelect.value;
+
+                var event = new Event('change');
+                readingTimeSelect.dispatchEvent(event);
+
+                var sortSelect = document.getElementById('sortSelect');
+                sortSelect.value = sortSelect.options[0].value;
+                sort = sortSelect.value;
+
+                var event = new Event('change');
+                sortSelect.dispatchEvent(event);
+
+                document.getElementById('visual-novel-search-input').value = '';
+                search = document.getElementById('visual-novel-search-input').value;
+
+
+                const filters = {
+                    tags: '',
+                    genres: '',
+                    //authors: urlParams.get('authors') || '',
+                    //translators: urlParams.get('translators') || '',
+                    languages: '',
+                    platforms: '',
+                    spoilerLevel: '',
+                    readingTime: '',
+                    sort: '',
+                    search: ''
+                };
+
+                let itemsPerPage = 20;
+
+                updateUrl(page, filters);
+
+                updateContent(tags.concat(excludeTags), genres.concat(excludeGenres), languages.concat(excludeLanguages), platforms.concat(excludePlatforms), spoilerLevel, readingTime, sort, search, 1, itemsPerPage);
+            });
+
+            document.querySelector('.btn-primary-submit-filter').addEventListener('click', function (event) {
+                event.preventDefault();
+
+                var { tags, genres, languages, platforms, spoilerLevel, readingTime, sort, search } = getFilters();
+
+                // resetButton.style.display = "inline-block";
+
+                //console.log("tags[" + tags.join(',') + "] exclude_tags[" + excludeTags.join(',') + "] genres[" + genres.join(',') + "] exclude_genres[" + excludeGenres.join(',') + "] languages[" + languages.join(',') + "] exclude_languages[" + excludeLanguages.join(',') + "] platforms[" + platforms.join(',') + "] exclude_platforms[" + excludePlatforms.join(',') + "]");
+
+                let page = 1;
+                let itemsPerPage = 20;
+
+                const filters = {
+                    tags: tags,
+                    genres: genres,
+                    //authors: urlParams.get('authors') || '',
+                    //translators: urlParams.get('translators') || '',
+                    languages: languages,
+                    platforms: platforms,
+                    spoilerLevel: spoilerLevel,
+                    readingTime: readingTime,
+                    sort: sort,
+                    search: search
+                };
+
+                changePage(page, filters);
+                //updateContent(tags, genres, languages, platforms, spoilerLevel, readingTime, sort, page, itemsPerPage);
+            });
+        }
+    });
+
+    function updateContent(tags, genres, languages, platforms, spoilerLevel, readingTime, sort, search, page, itemsPerPage) {
+
+        var alert = document.getElementById("liveAlertPlaceholder");
+
+        alert.innerHTML = `<div class="spinner-border my-2" role = "status"><span class="visually-hidden">Loading...</span></div>`
+
+        var url = "/Home/VisualNovelContent?";
+
+        var isFirstIteration = true;
+
+        tags.forEach((value, index, fullArray) => {
+            if (isFirstIteration) {
+                url += "tags=" + value;
+                isFirstIteration = false;
+            }
+            else {
+                url += "&tags=" + value
+            }
+        });
+
+        genres.forEach((value, index, fullArray) => {
+            if (isFirstIteration) {
+                url += "genres=" + value;
+                isFirstIteration = false;
+            }
+            else {
+                url += "&genres=" + value
+            }
+        });
+
+        languages.forEach((value, index, fullArray) => {
+            if (isFirstIteration) {
+                url += "languages=" + value;
+                isFirstIteration = false;
+            }
+            else {
+                url += "&languages=" + value
+            }
+        });
+
+        platforms.forEach((value, index, fullArray) => {
+            if (isFirstIteration) {
+                url += "platforms=" + value;
+                isFirstIteration = false;
+            }
+            else {
+                url += "&platforms=" + value
+            }
+        });
+
+        if (isFirstIteration) {
+            url += "spoilerLevel=" + spoilerLevel;
+            isFirstIteration = false;
+        }
+        else {
+            url += "&spoilerLevel=" + spoilerLevel;
+        }
+
+        if (isFirstIteration) {
+            url += "readingTime=" + readingTime;
+            isFirstIteration = false;
+        }
+        else {
+            url += "&readingTime=" + readingTime;
+        }
+
+        if (isFirstIteration) {
+            url += "sort=" + sort;
+            isFirstIteration = false;
+        }
+        else {
+            url += "&sort=" + sort;
+        }
+
+        if (page !== null) {
+            url += "&Page=" + page;
+        }
+
+        if (itemsPerPage !== null) {
+            url += "&ItemsPerPage=" + itemsPerPage;
+        }
+
+        if (search) {
+            url += "&search=" + search;
+        }
+
+        var xhr = new XMLHttpRequest();
+        xhr.open("GET", url, true);
+        xhr.onreadystatechange = function () {
+            if (xhr.readyState === 4) {
+                if (xhr.status === 200) {
+                    document.getElementById("visualNovelContentContainer").innerHTML = xhr.responseText;
+                    alert.innerHTML = '';
+                } else {
+                    alert.innerHTML = `@await Html.PartialAsync("_ErrorAlert")`;
+                }
+            }
+        };
+        xhr.send();
+    }
+
+    document.getElementById('sortSelect').addEventListener('change', function (event) {
+        event.preventDefault();
+
+        var { tags, genres, languages, platforms, spoilerLevel, readingTime, sort, search } = getFilters();
+        let page = 1;
+        let itemsPerPage = 20;
+
+        const filters = {
+            tags: tags,
+            genres: genres,
+            //authors: urlParams.get('authors') || '',
+            //translators: urlParams.get('translators') || '',
+            languages: languages,
+            platforms: platforms,
+            spoilerLevel: spoilerLevel,
+            readingTime: readingTime,
+            sort: sort,
+            search: search
+        };
+
+        changePage(page, filters);
+    });
+
+    // document.addEventListener("DOMContentLoaded", function () {
+    //     document.getElementById("applyFilter").addEventListener("click", function () {
+    //         var xhr = new XMLHttpRequest();
+    //         xhr.open("GET", "/Home/VisualNovelContent", true); // Замените ControllerName на имя вашего контроллера
+    //         xhr.onreadystatechange = function () {
+    //             if (xhr.readyState === 4) {
+    //                 if (xhr.status === 200) {
+    //                     console.log(xhr);
+    //                     document.getElementById("visualNovelContentContainer").innerHTML = xhr.responseText;
+    //                 } else {
+    //                     alert('Произошла ошибка при загрузке данных.');
+    //                 }
+    //             }
+    //         };
+    //         xhr.send();
+    //     });
+    // });
+</script>

@@ -1,0 +1,37 @@
+﻿@using NovelSite.Models.Novel;
+
+@{
+    ViewData["Title"] = "Админ-панель";
+}
+
+<div class="text-center">
+
+    <a asp-controller="Novel" asp-action="Create">Добавить визуальную новеллу</a>
+    <a asp-controller="Novel" asp-action="CreateFromJson">Добавить визуальную новеллу из JSON</a>
+
+    <div class="row">
+        <div class="col-4">
+            <h3 class="display-4">Добавление роли</h3>
+            <form method="post" asp-action="AddRole">
+                <input type="text" name="roleName" placeholder="Название роли" />
+                <button type="submit" class="btn btn-primary">Добавить роль</button>
+            </form>
+        </div>
+        <div class="col-4">
+            <h3 class="display-4">Присвоение роли</h3>
+            <form method="post" asp-action="AssignRole">
+                <input type="text" name="roleName" placeholder="Название роли" />
+                <input type="text" name="userId" placeholder="Идентификатор пользователя" />
+                <button type="submit" class="btn btn-primary">Присвоить роль</button>
+            </form>
+        </div>
+        <div class="col-4">
+            <h3 class="display-4">Удаление роли</h3>
+            <form method="post" asp-action="RemoveRole">
+                <input type="text" name="roleName" placeholder="Название роли" />
+                <input type="text" name="userId" placeholder="Идентификатор пользователя" />
+                <button type="submit" class="btn btn-primary">Добавить роль</button>
+            </form>
+        </div>
+    </div>
+</div>

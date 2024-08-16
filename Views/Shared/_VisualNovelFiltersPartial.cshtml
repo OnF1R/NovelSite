@@ -1,0 +1,84 @@
+﻿@using NovelSite.Models.Novel;
+
+<div class="" id="searchFilterCollapse">
+    <form id="filterForm" method="post" enctype="multipart/form-data">
+        <div class="filters">
+            <select id="readingTimeSelect" class="vn-select" aria-label="Visual novel reading time select">
+                <option value="@ReadingTime.Any" selected>Любая продолжительность</option>
+                <option value="@ReadingTime.LessTwoHours">Меньше 2-ух часов</option>
+                <option value="@ReadingTime.TwoToTenHours">От 2-ух до 10-ти часов</option>
+                <option value="@ReadingTime.TenToThirtyHours">От 10-ти до 30-ти часов</option>
+                <option value="@ReadingTime.ThirtyToFiftyHours">От 30-ти до 50-ти часов</option>
+                <option value="@ReadingTime.OverFiftyHours">Больше 50-ти часов</option>
+            </select>
+            <button type="button" class="btn btn-primary dropdown-toggle" id="dropdownGenres" data-bs-toggle="dropdown" aria-expanded="false">
+                Жанры
+            </button>
+            <ul class="dropdown-menu dropdown-menu-genre" aria-labelledby="dropdownGenres" id="genreDropdown">
+                <li style="margin: 0px 6px;">
+                    <input type="text" class="form-control mb-2" id="genreSearch" placeholder="Поиск жанров">
+                </li>
+                @foreach (Genre genre in ViewBag.Genres)
+                {
+                    <li><div class="dropdown-item dropdown-item-genre checkbox-label"><input type="checkbox" name="genres" value="@genre.Id" data-state="none" style="display: none;"> <span>@genre.Name</span></div></li>
+                }
+            </ul>
+            <button type="button" class="btn btn-primary dropdown-toggle" id="dropdownTags" data-bs-toggle="dropdown" aria-expanded="false">
+                Теги
+            </button>
+            <ul class="dropdown-menu dropdown-menu-tag" aria-labelledby="dropdownTags" id="tagDropdown">
+                <li style="margin: 0px 6px;">
+                    <input type="text" class="form-control mb-2" id="tagSearch" placeholder="Поиск тегов">
+                </li>
+                <li class="radioSpoilerLevel" style="margin: 0px 6px;">
+                    <input type="radio" class="mb-2" id="spoilerLevelNoneCheckbox" name="spoilerLevelCheck" value="@SpoilerLevel.None" checked />
+                    <label for="spoilerLevelNoneCheckbox">Скрыть спойлеры</label>
+                </li>
+                <li class="radioSpoilerLevel" style="margin: 0px 6px;">
+                    <input type="radio" class="mb-2" id="spoilerLevelMinorCheckbox" name="spoilerLevelCheck" value="@SpoilerLevel.Minor" />
+                    <label for="spoilerLevelMinorCheckbox">Незначительные спойлеры</label>
+                </li>
+                <li class="radioSpoilerLevel" style="margin: 0px 6px;">
+                    <input type="radio" class="mb-2" id="spoilerLevelMajorCheckbox" name="spoilerLevelCheck" value="@SpoilerLevel.Major" />
+                    <label for="spoilerLevelMajorCheckbox" style="color:red;">Спойлери всё!</label>
+                </li>
+                <li><hr class="dropdown-divider"></li>
+                @foreach (Tag tag in ViewBag.Tags)
+                {
+                    <li><div class="dropdown-item dropdown-item-tag checkbox-label"><input type="checkbox" name="tags" value="@tag.Id" data-state="none" style="display: none;"><span>@tag.Name</span></div></li>
+                }
+            </ul>
+            <button type="button" class="btn btn-primary dropdown-toggle" id="dropdownLanguages" data-bs-toggle="dropdown" aria-expanded="false">
+                Языки
+            </button>
+            <ul class="dropdown-menu dropdown-menu-language" aria-labelledby="dropdownLanguages" id="languageDropdown">
+                <li style="margin: 0px 6px;">
+                    <input type="text" class="form-control mb-2" id="languageSearch" placeholder="Поиск языков">
+                </li>
+                <li><hr class="dropdown-divider"></li>
+                @foreach (Language language in ViewBag.Languages)
+                {
+                    <li><div class="dropdown-item dropdown-item-language checkbox-label"><input type="checkbox" name="languages" value="@language.Id" data-state="none" style="display: none;"><span>@language.Name</span></div></li>
+                }
+            </ul>
+            <button type="button" class="btn btn-primary dropdown-toggle" id="dropdownPlatforms" data-bs-toggle="dropdown" aria-expanded="false">
+                Платформы
+            </button>
+            <ul class="dropdown-menu dropdown-menu-platform" aria-labelledby="dropdownPlatforms" id="platformDropdown">
+                <li style="margin: 0px 6px;">
+                    <input type="text" class="form-control mb-2" id="platformSearch" placeholder="Поиск платформ">
+                </li>
+                <li><hr class="dropdown-divider"></li>
+                @foreach (GamingPlatform platform in ViewBag.Platforms)
+                {
+                    <li><div class="dropdown-item dropdown-item-platform checkbox-label"><input type="checkbox" name="platforms" value="@platform.Id" data-state="none" style="display: none;"><span>@platform.Name</span></div></li>
+                }
+            </ul>
+            <div class="mt-3">
+                <button id="applyFilter" type="submit" class="btn btn-primary btn-primary-submit-filter">Применить фильтр</button>
+                <button id="resetFilter" type="submit" class="btn btn-danger">Сбросить фильтр</button>
+            </div>
+        </div>
+    </form>
+</div>
+

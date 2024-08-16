@@ -1,0 +1,103 @@
+﻿@using NovelSite.Models.Novel;
+
+@{
+    List<TagMetadata> tags = ViewBag.TagsMetadata;
+}
+
+@if (tags.Count > 0)
+{
+    <ul class="tags-column">
+        @{
+            var contTags = tags.Where(t => t.Tag.Category == TagCategory.cont).OrderBy(t => t.Tag.Name);
+            var techTags = tags.Where(t => t.Tag.Category == TagCategory.tech).OrderBy(t => t.Tag.Name);
+            var eroTags = tags.Where(t => t.Tag.Category == TagCategory.ero).OrderBy(t => t.Tag.Name);
+
+            if (contTags != null && contTags.Count() > 0)
+            {
+                <li class="tags-column-parent">Контент</li>
+
+                foreach (TagMetadata tag in contTags)
+                {
+                    switch (tag.SpoilerLevel)
+                    {
+                        case SpoilerLevel.None:
+                            <li class="tags-column-item">
+                                <a id="tags-spoiler-none" asp-controller="Novel" asp-action="Novels" asp-route-tags="@tag.Tag.Id" asp-route-spoilerLevel="@SpoilerLevel.None">@tag.Tag.Name</a>
+                            </li>
+                            break;
+                        case SpoilerLevel.Minor:
+                            <li class="tags-column-item">
+                                <a id="tags-spoiler-minor" asp-controller="Novel" asp-action="Novels" asp-route-tags="@tag.Tag.Id" asp-route-spoilerLevel="@SpoilerLevel.None">@tag.Tag.Name<sup style="font-size: 14px">S</sup></a>
+                            </li>
+                            break;
+                        case SpoilerLevel.Major:
+                            <li class="tags-column-item">
+                                <a id="tags-spoiler-major" asp-controller="Novel" asp-action="Novels" asp-route-tags="@tag.Tag.Id" asp-route-spoilerLevel="@SpoilerLevel.None">@tag.Tag.Name<sup style="color: red; font-size: 14px">S</sup></a>
+                            </li>
+                            break;
+                        default:
+                            break;
+                    }
+                }
+            }
+
+            if (techTags != null && techTags.Count() > 0)
+            {
+                <li class="tags-column-parent">Техническое</li>
+
+                foreach (TagMetadata tag in techTags)
+                {
+                    switch (tag.SpoilerLevel)
+                    {
+                        case SpoilerLevel.None:
+                            <li class="tags-column-item">
+                                <a id="tags-spoiler-none" asp-controller="Novel" asp-action="Novels" asp-route-tags="@tag.Tag.Id" asp-route-spoilerLevel="@SpoilerLevel.None">@tag.Tag.Name</a>
+                            </li>
+                            break;
+                        case SpoilerLevel.Minor:
+                            <li class="tags-column-item">
+                                <a id="tags-spoiler-minor" asp-controller="Novel" asp-action="Novels" asp-route-tags="@tag.Tag.Id" asp-route-spoilerLevel="@SpoilerLevel.None">@tag.Tag.Name<sup style="font-size: 14px">S</sup></a>
+                            </li>
+                            break;
+                        case SpoilerLevel.Major:
+                            <li class="tags-column-item">
+                                <a id="tags-spoiler-major" asp-controller="Novel" asp-action="Novels" asp-route-tags="@tag.Tag.Id" asp-route-spoilerLevel="@SpoilerLevel.None">@tag.Tag.Name<sup style="color: red; font-size: 14px">S</sup></a>
+                            </li>
+                            break;
+                        default:
+                            break;
+                    }
+                }
+            }
+
+            if (eroTags != null && eroTags.Count() > 0)
+            {
+                <li class="tags-column-parent">Сексуальный контент</li>
+
+                foreach (TagMetadata tag in eroTags)
+                {
+                    switch (tag.SpoilerLevel)
+                    {
+                        case SpoilerLevel.None:
+                            <li class="tags-column-item">
+                                <a id="tags-spoiler-none" asp-controller="Novel" asp-action="Novels" asp-route-tags="@tag.Tag.Id" asp-route-spoilerLevel="@SpoilerLevel.None">@tag.Tag.Name</a>
+                            </li>
+                            break;
+                        case SpoilerLevel.Minor:
+                            <li class="tags-column-item">
+                                <a id="tags-spoiler-minor" asp-controller="Novel" asp-action="Novels" asp-route-tags="@tag.Tag.Id" asp-route-spoilerLevel="@SpoilerLevel.None">@tag.Tag.Name<sup style="font-size: 14px">S</sup></a>
+                            </li>
+                            break;
+                        case SpoilerLevel.Major:
+                            <li class="tags-column-item">
+                                <a id="tags-spoiler-major" asp-controller="Novel" asp-action="Novels" asp-route-tags="@tag.Tag.Id" asp-route-spoilerLevel="@SpoilerLevel.None">@tag.Tag.Name<sup style="color: red; font-size: 14px">S</sup></a>
+                            </li>
+                            break;
+                        default:
+                            break;
+                    }
+                }
+            }
+        }
+    </ul>
+}

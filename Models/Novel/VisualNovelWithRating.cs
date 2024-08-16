@@ -1,4 +1,4 @@
-﻿namespace NovelSite.Models
+﻿namespace NovelSite.Models.Novel
 {
     public class VisualNovelWithRating
     {

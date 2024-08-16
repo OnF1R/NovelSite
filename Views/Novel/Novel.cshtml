@@ -1,6 +1,12 @@
-﻿@using Microsoft.AspNetCore.Identity;
-@inject SignInManager<IdentityUser> SignInManager;
-@inject UserManager<IdentityUser> UserManager;
+﻿@using System;
+@using System.Text;
+@using Microsoft.AspNetCore.Identity;
+@using NovelSite.Data.Identity;
+@using NovelSite.Services.Queries;
+@using NovelSite.Models.Novel;
+
+@inject SignInManager<ApplicationIdentityUser> SignInManager;
+@inject UserManager<ApplicationIdentityUser> UserManager;
 
 
 @{
@@ -8,35 +14,80 @@
     ViewData["Title"] = vn.Title;
     string fancyappsScript = "https://cdn.jsdelivr.net/npm/@fancyapps/ui@5.0/dist/fancybox/fancybox.umd.js";
     string fancyappsCss = "https://cdn.jsdelivr.net/npm/@fancyapps/ui@5.0/dist/fancybox/fancybox.css";
+    string fancyCarouselScript = "https://cdn.jsdelivr.net/npm/@fancyapps/ui@5.0/dist/carousel/carousel.umd.js";
+    string fancyCarouselCss = "https://cdn.jsdelivr.net/npm/@fancyapps/ui@5.0/dist/carousel/carousel.css";
+    string fancyCarouselThumbsCss = "https://cdn.jsdelivr.net/npm/@fancyapps/ui@5.0/dist/carousel/carousel.thumbs.css";
+    string fancyCarouselThumbsScript = "https://cdn.jsdelivr.net/npm/@fancyapps/ui@5.0/dist/carousel/carousel.thumbs.umd.js";
+
+    <script src="@fancyCarouselThumbsScript"></script>
+    <script src= "@fancyCarouselScript"></script >
+
+    string s3Url = $"https://2f58d602-2c33-481e-875b-700b4d4b3263.selstorage.ru/";
+    string backgroundImageUrl = @s3Url + vn.BackgroundImageLink;
+    bool isHaveRating = false;
+    ApplicationIdentityUser currentUser = null;
+
+    if (SignInManager.IsSignedIn(User))
+    {
+        currentUser = await UserManager.GetUserAsync(User);
+    }
+    StringBuilder metaKeywords = new StringBuilder($"Визуальная новелла, {vn.Title}");
+    StringBuilder metaDescription = new StringBuilder();
+
+    if (vn.DownloadLinks != null)
+    {
+        metaDescription.Append($"На этой странице можно скачать визуальную новеллу {vn.Title}");
+        metaKeywords.Append(",Cкачать");
+    }
+    else
+    {
+        metaDescription.Append($"На этой странице предоставлена информация о визуальной новелле {vn.Title}");
+    }
+
+    if (vn.AnotherTitles != null)
+    {
+        metaDescription.Append($" или другие названия {string.Join(',', vn.AnotherTitles)},");
+        metaKeywords.Append($",{string.Join(',', vn.AnotherTitles)}");
+    }
+
+
+
+    
+
+    if (vn.Genres != null)
+    {
+        metaDescription.Append($" в жанре {string.Join(',', vn.Genres.Select(g => g.Name))}.");
+        metaKeywords.Append($",{string.Join(',', vn.Genres.Select(g => g.Name))}");
+    }
+
+    ViewData["MetaDescription"] = metaDescription;
+    ViewData["MetaKeywords"] = metaKeywords;
+
+    // Open Graph tags
+    ViewData["OgTitle"] = vn.Title;
+    ViewData["OgDescription"] = metaDescription;
+    ViewData["OgImage"] = $"https://2f58d602-2c33-481e-875b-700b4d4b3263.selstorage.ru/{vn.CoverImageLink}";
+    ViewData["OgUrl"] = Globals.GetFullUrl(Context);
+}
+<link rel="stylesheet" href="@fancyCarouselThumbsCss" />
+<link rel="stylesheet" href="@fancyCarouselCss" />
+<link href="@fancyappsCss" rel="stylesheet">
+
+@if (vn.BackgroundImageLink != null)
+{
+    <img class="bg-top" src="@backgroundImageUrl" />
 }
 
-<link href="https://cdnjs.cloudflare.com/ajax/libs/fotorama/4.6.4/fotorama.css" rel="stylesheet">
-<link href="@fancyappsCss" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/fotorama/4.6.4/fotorama.min.js"></script>
-
-
-<style>
-
-    /* Stretch the links */
-    .fotorama__html div,
-    .fotorama__html a {
-        display: block;
-        height: 100%;
-        background: url(_.gif);
-    }
-</style>
-
-<img class="bg-top" src="@ViewBag.BackgroundImage" />
-
 <div class="text-center">
-    <div class="card p-2">
+    <div class="vn-page p-2">
         <div class="row pb-4">
-
             <div class="col-lg-4 col-xl-4 col-xxl-4 col-md-4 col-sm-12">
-                @if (@ViewBag.CoverImage != null)
+                @if (vn.CoverImageLink != null)
                 {
+                    string coverImageUrl = @s3Url + vn.CoverImageLink;
                     <div class="position-relative">
-                        <img loading="lazy" src="@ViewBag.CoverImage" class="w-100" />
+
+                        <img loading="lazy" style="border-radius: 8px;" src="@coverImageUrl" class="w-100" />
                         @if (vn.VndbId != null)
                         {
                             <a href="https://vndb.org/@vn.VndbId"><img loading="lazy" src="~/images/vndbIcon.png" class="position-absolute bottom-0 end-0 translate-middle" /></a>
@@ -47,46 +98,131 @@
                 {
                     <img src="images/thumbnail.png" class="w-100">
                 }
-                @if (SignInManager.IsSignedIn(User))
+                @if (currentUser != null)
                 {
-                    <div class="dropdown m-2">
-                        <button class="btn btn-secondary dropdown-toggle" type="button" id="VisualNovelListAction" data-bs-toggle="dropdown" aria-expanded="false">
-                            Добавить в список @* TODO if already in list show that *@
-                        </button>
-                        <ul class="dropdown-menu" aria-labelledby="VisualNovelListAction">
-                            <li><a class="dropdown-item" href="#">Планирую</a></li>
-                            <li><a class="dropdown-item" href="#">Перечитываю</a></li>
-                            <li><a class="dropdown-item" href="#">Прочитано</a></li>
-                            <li><a class="dropdown-item" href="#">Планирую</a></li>
-                            <li><a class="dropdown-item" href="#">Брошено</a></li>
-                            <li><a class="dropdown-item" href="#">Черный список</a></li>
-                            <li><a class="dropdown-item" href="#">Любимое</a></li>
-                        </ul>
-                    </div>
-                    <a class="btn btn-secondary" asp-controller="Novel" asp-action="Edit" asp-route-id="@vn.Id">Редактировать</a>
-                    <a class="btn btn-secondary" asp-controller="Novel" asp-action="EditImage" asp-route-id="@vn.Id">Изменить изображение</a>
-                    <div class="dropdown m-2">
-                        <button class="btn btn-secondary dropdown-toggle" type="button" id="VisualNovelRanking" data-bs-toggle="dropdown" aria-expanded="false">
-                            Оценка@* TODO if already in list show that *@
-                        </button>
-                        <ul class="dropdown-menu" aria-labelledby="VisualNovelRanking">
-                            @for (int i = 10; i >= 1; i--)
-                            {
-                                <li><a class="dropdown-item" href="#">@i</a></li>
-                            }
-                        </ul>
+                    <div class="mt-3">
+                        
+                        @if (currentUser.Id == vn.AdddeUserId.ToString())
+                        {
+                            <a class="btn btn-primary" asp-controller="Novel" asp-action="Edit" asp-route-linkName="@vn.LinkName">Редактировать</a>
+                            <a class="btn btn-primary" asp-controller="Novel" asp-action="EditImage" asp-route-linkName="@vn.LinkName">Изменить изображение</a>
+                        }
+
+                        @{
+                            List<VisualNovelList> userLists = await HttpQueries.GetVisualNovelLists(currentUser.Id, true);
+                            List<VisualNovelListEntry> userListEntry = await HttpQueries.GetVisualNovelInAnyUserList(currentUser.Id, vn.Id);
+                        }
+
+                        @* <div class="mt-3">
+                            <span><b>Мои списки:</b></span>
+                            <select id="UserVisualNovelLists" name="UserVisualNovelLists" class="form-select js-example-basic-multiple user-visual-novel-lists-selector" multiple required aria-label="Visual novel author select">
+                                @foreach (var list in userLists)
+                                {
+                                    if (userListEntry.Any(entry => entry.VisualNovelList.Id == list.Id))
+                                    {
+                                        <option selected value="@list.Id">@list.Name</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@list.Id">@list.Name</option>
+                                    }
+                                }
+                            </select>
+                        </div> *@
+
+
+
+                        <div class="mt-3">
+                            <div class="custom-select-container" id="custom-select-container">
+                                <div class="custom-select-wrapper" id="custom-select-wrapper">
+                                    Добавить в список
+                                </div>
+                                <div class="custom-select-options" id="custom-select-options">
+                                    @foreach (var list in userLists)
+                                    {
+                                        if (userListEntry.Any(entry => entry.VisualNovelList.Id == list.Id))
+                                        {
+                                            <label>
+                                                <input type="checkbox" value="@list.Id" checked data-mutually-exclusive="@(@list.ListType == null ? "" : @list.ListType.IsMutuallyExclusive.ToString().ToLower())"> @list.Name
+                                            </label>
+                                        }
+                                        else
+                                        {
+                                            <label>
+                                                <input type="checkbox" value="@list.Id" data-mutually-exclusive="@(list.ListType == null ? "" : @list.ListType.IsMutuallyExclusive.ToString().ToLower())"> @list.Name
+                                            </label>
+                                        } 
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row g-3 mt-3">
+                            <div class="col-8">
+                                <input type="text" id="new-option-input" class="form-control" placeholder="Название нового списка">
+                            </div>
+                            <div class="col-4">
+                                <button id="add-option-btn" class="btn btn-primary">Добавить</button>
+                            </div>
+                        </div>
                     </div>
                 }
                 else
                 {
                     <p class="mt-2">Чтобы оценить визуальную новеллу или добавить её в список, необходимо <a asp-area="Identity" asp-page="/Account/Login">авторизоваться</a></p>
                 }
+
+                <div class="mt-3">
+                    <svg class="me-2" width="32px" height="32px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+
+                        <g stroke-width="0" />
+
+                        <g stroke-linecap="round" stroke-linejoin="round" />
+
+                        <g> <path d="M9 4.45962C9.91153 4.16968 10.9104 4 12 4C16.1819 4 19.028 6.49956 20.7251 8.70433C21.575 9.80853 22 10.3606 22 12C22 13.6394 21.575 14.1915 20.7251 15.2957C19.028 17.5004 16.1819 20 12 20C7.81811 20 4.97196 17.5004 3.27489 15.2957C2.42496 14.1915 2 13.6394 2 12C2 10.3606 2.42496 9.80853 3.27489 8.70433C3.75612 8.07914 4.32973 7.43025 5 6.82137" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round" /> <path d="M15 12C15 13.6569 13.6569 15 12 15C10.3431 15 9 13.6569 9 12C9 10.3431 10.3431 9 12 9C13.6569 9 15 10.3431 15 12Z" stroke="#ffffff" stroke-width="1.5" /> </g>
+                    </svg>
+                    <span>@vn.PageViewesCount</span>
+                </div>
+
             </div>
             <div class="col-xxl-8 col-xl-8 col-lg-8 col-md-8 col-sm-12" style="text-align: left;">
-                <h1>@vn.Title</h1>
-                @if (vn.OriginalTitle != null) 
+                @if (currentUser != null)
                 {
-                    <p><b>Оригинальное название</b>: @vn.OriginalTitle</p>
+                    int userRating = await HttpQueries.GetVisualNovelUserRating(currentUser.Id, vn.Id);
+                    <div class="rating-area">
+                        @for (int i = 10; i > 0; i--)
+                        {
+                            if (userRating == i)
+                            {
+                                <input type="radio" id="star-@i" name="rating" value="@i" checked>
+                                <label for="star-@i" title="Оценка «@i»"></label>
+                            }
+                            else
+                            {
+                                <input type="radio" id="star-@i" name="rating" value="@i">
+                                <label for="star-@i" title="Оценка «@i»"></label>
+                            }
+                        }
+                    </div>
+                    @if (userRating > 0)
+                    {
+                        isHaveRating = true;
+                        <button id="delete-rating-button" class="btn btn-secondary">Удалить рейтинг</button>
+                    }
+                    else
+                    {
+                        isHaveRating = false;
+                        <button id="delete-rating-button" class="btn d-none btn-secondary">Удалить рейтинг</button>
+                    }
+                }
+                <h1>@vn.Title</h1>
+                @if (vn.AnotherTitles != null)
+                {
+                    <ul style="list-style: none; padding: 0px;">
+                        @foreach (string title in vn.AnotherTitles)
+                        {
+                            <li>@title</li>
+                        }
+                    </ul>
                 }
                 @switch (vn.Status)
                 {
@@ -107,10 +243,10 @@
                 @if (@ViewBag.VnAverageRating == -1 || @ViewBag.VnRatingCount == -1)
                 {
                     <p><b>Рейтинг</b>: 0/10 (Никто ещё не оценил эту визуальную новеллу)</p>
-                } 
+                }
                 else
                 {
-                    <p><b>Рейтинг</b>: @ViewBag.VnAverageRating/10 (@ViewBag.VnRatingCount оценок)</p>
+                    <p><b>Рейтинг</b>: @Math.Round(ViewBag.VnAverageRating, 2)/10 (@ViewBag.VnRatingCount оценок)</p>
                 }
                 @if (@vn.VndbRating != null)
                 {
@@ -166,7 +302,7 @@
                             else
                             {
                                 convertedMinutes = $"{hours} ч. {remainMinutes} м.";
-                                
+
                             }
                         }
 
@@ -179,58 +315,145 @@
 
                 @if (vn.Author != null && vn.Author.Count > 1)
                 {
-                    <p><b>Авторы</b>: 
-                    @for (int i = 0; i < vn.Author.Count; i++)
-                    {
-                        @if (vn.Author[i].Source != null)
+                    <p>
+                        <b>Авторы</b>:
+                        @for (int i = 0; i < vn.Author.Count; i++)
                         {
-                            <a target="_blank" href="@vn.Author[i].Source">@vn.Author[i].Name</a>
-                        }
-                        else
-                        {
-                            <span>@vn.Author[i].Name</span>
-                        }
-                        if (vn.Author[i].VndbId != null)
-                        {
-                            if (i < vn.Author.Count - 1)
+                            @* @if (vn.Author[i].Source != null)
                             {
-                                <span>(</span><a target="_blank" href="https://vndb.org/@vn.Author[i].VndbId">VNDB</a><span>),</span>
+                                <a target="_blank" href="@vn.Author[i].Source">@vn.Author[i].Name</a>
                             }
                             else
                             {
-                                <span>(</span><a target="_blank" href="https://vndb.org/@vn.Author[i].VndbId">VNDB</a><span>)</span>
+                                <span>@vn.Author[i].Name</span>
+                            } *@
+                            if (vn.Author[i].VndbId != null)
+                            {
+                                if (i < vn.Author.Count - 1)
+                                {
+                                    <a target="_blank" href="https://vndb.org/@vn.Author[i].VndbId">@vn.Author[i].Name</a><span>, </span>
+                                }
+                                else
+                                {
+                                    <a target="_blank" href="https://vndb.org/@vn.Author[i].VndbId">@vn.Author[i].Name</a>
+                                }
+                            }
+                            else
+                            {
+                                if (i < vn.Author.Count - 1)
+                                {
+                                    <span>@vn.Author[i].Name, </span>
+                                }
+                                else
+                                {
+                                    <span>@vn.Author[i].Name</span>
+                                }
                             }
                         }
-                    }
                     </p>
                 }
                 else
                 {
                     @if (vn.Author != null && vn.Author.Count > 0 && vn.Author[0].VndbId != null)
                     {
-                        <p><b>Автор: </b>
-                        @if (vn.Author[0].Source != null)
-                        {
-                            <span><a target="_blank" href="@vn.Author[0].Source">@vn.Author[0].Name</a></span>
-                        }
-                        else
-                        {
-                            <span>@vn.Author[0].Name</span>
-                        }
+                        <p>
+                            <b>Автор: </b>
+                            @* @if (vn.Author[0].Source != null)
+                            {
+                                <span><a target="_blank" href="@vn.Author[0].Source">@vn.Author[0].Name</a></span>
+                            }
+                            else
+                            {
+                                <span>@vn.Author[0].Name</span>
+                            } *@
 
-                        @if(vn.Author[0].VndbId != null)
-                        {
-                            <span> (</span><a target="_blank" href="https://vndb.org/@vn.Author[0].VndbId">VNDB</a><span>)</span>
-                        }
+                            @if (vn.Author[0].VndbId != null)
+                            {
+                                <span><a target="_blank" href="https://vndb.org/@vn.Author[0].VndbId">@vn.Author[0].Name</a></span>
+                            }
+                            else
+                            {
+                                <span>@vn.Author[0].Name</span>
+                            }
                         </p>
                     }
                 }
 
-                @if (vn.Translator != null)
+                @if (vn.Translator != null && vn.Translator.Count > 1)
                 {
-                    <p><b>Переводчик</b>: <a target="_blank" href="@vn.Translator.Source">@vn.Translator.Name</a></p>
+                    <p>
+                        <b>Переводчики</b>:
+                        @for (int i = 0; i < vn.Translator.Count; i++)
+                        {
+                            @if (vn.Translator[i].Source != null)
+                            {
+                                if (i < vn.Translator.Count - 1)
+                                {
+                                    <a target="_blank" href="@vn.Translator[i].Source">@vn.Translator[i].Name</a><span>,</span>
+                                }
+                                else 
+                                {
+                                    <a target="_blank" href="@vn.Translator[i].Source">@vn.Translator[i].Name</a>
+                                }
+
+                            }
+                            else
+                            {
+                                if (i < vn.Translator.Count - 1)
+                                {
+                                    <span>@vn.Translator[i].Name</span><span>,</span>
+                                }
+                                else
+                                {
+                                    <span>@vn.Translator[i].Name</span>
+                                }
+                            }
+                        }
+                    </p>
                 }
-                <p><b>Год выпуска</b>: @vn.ReleaseYear</p>
+                else
+                {
+                    @if (vn.Translator != null && vn.Translator.Count > 0)
+                    {
+                        <p>
+                            <b>Переводчик: </b>
+                            @if (vn.Translator[0].Source != null)
+                            {
+                                <span><a target="_blank" href="@vn.Translator[0].Source">@vn.Translator[0].Name</a></span>
+                            }
+                            else
+                            {
+                                <span>@vn.Translator[0].Name</span>
+                            }
+                        </p>
+                    }
+                }
+
+                @if (vn.ReleaseYear != null)
+                {
+                    if (vn.ReleaseMonth != null)
+                    {
+                        if (vn.ReleaseDay != null)
+                        {
+                            string value = $"{(vn.ReleaseDay > 9 ? vn.ReleaseDay : $"0{vn.ReleaseDay}")}.{(vn.ReleaseMonth > 9 ? vn.ReleaseMonth : $"0{vn.ReleaseMonth}")}.{vn.ReleaseYear}";
+                            <p><b>Дата выпуска</b>: @value</p>
+                        }
+                        else
+                        {
+                            string value = $"{(vn.ReleaseMonth > 9 ? vn.ReleaseMonth : $"0{vn.ReleaseMonth}")}.{vn.ReleaseYear}";
+                            <p><b>Дата выпуска</b>: @value</p>
+                        }
+                    }
+                    else
+                    {
+                        <p><b>Год выпуска</b>: @vn.ReleaseYear</p>
+                    }
+                }
+                else
+                {
+                    <p><b>Год выпуска</b>: Неизвестно</p>
+                }
+
                 <p><b>Добавил</b>: @vn.AddedUserName</p>
                 <p>
                     <b>Языки</b>:
@@ -239,11 +462,11 @@
                         {
                             if (i < vn.Languages.Count - 1)
                             {
-                                <a asp-controller="Novel" asp-action="FiltredBy" asp-route-id="@vn.Languages[i].Id" asp-route-filter="3">@vn.Languages[i].Name</a><span>,</span>
+                                            <a asp-controller="Novel" asp-action="Novels" asp-route-languages="@vn.Languages[i].Id">@vn.Languages[i].Name</a><span>,</span>
                             }
                             else
                             {
-                                <a asp-controller="Novel" asp-action="FiltredBy" asp-route-id="@vn.Languages[i].Id" asp-route-filter="3">@vn.Languages[i].Name</a>
+                                            <a asp-controller="Novel" asp-action="Novels" asp-route-languages="@vn.Languages[i].Id">@vn.Languages[i].Name</a>
                             }
                         }
                     }
@@ -255,11 +478,11 @@
                         {
                             if (i < vn.Platforms.Count - 1)
                             {
-                                <a asp-controller="Novel" asp-action="FiltredBy" asp-route-id="@vn.Platforms[i].Id" asp-route-filter="4">@vn.Platforms[i].Name</a><span>,</span>
+                                            <a asp-controller="Novel" asp-action="Novels" asp-route-platforms="@vn.Platforms[i].Id">@vn.Platforms[i].Name</a><span>,</span>
                             }
                             else
                             {
-                                <a asp-controller="Novel" asp-action="FiltredBy" asp-route-id="@vn.Platforms[i].Id" asp-route-filter="4">@vn.Platforms[i].Name</a>
+                                            <a asp-controller="Novel" asp-action="Novels" asp-route-platforms="@vn.Platforms[i].Id">@vn.Platforms[i].Name</a>
                             }
                         }
                     }
@@ -271,82 +494,182 @@
                         {
                             if (i < vn.Genres.Count - 1)
                             {
-                                <a asp-controller="Novel" asp-action="FiltredBy" asp-route-id="@vn.Genres[i].Id" asp-route-filter="2">@vn.Genres[i].Name</a><span>,</span>
+                                            <a asp-controller="Novel" asp-action="Novels" asp-route-genres="@vn.Genres[i].Id">@vn.Genres[i].Name</a><span>,</span>
                             }
                             else
                             {
-                                <a asp-controller="Novel" asp-action="FiltredBy" asp-route-id="@vn.Genres[i].Id" asp-route-filter="2">@vn.Genres[i].Name</a>
+                                            <a asp-controller="Novel" asp-action="Novels" asp-route-genres="@vn.Genres[i].Id">@vn.Genres[i].Name</a>
                             }
                         }
                     }
                 </p>
-                <p><b>Дата добавления</b>: @vn.DateAdded</p>
-                <p><b>Дата обновления</b>: @vn.DateUpdated</p>
-                <div class="row">
-                    @if (vn.Links != null)
+
+                @if (vn.RelatedNovels != null && vn.RelatedNovels.Count > 0)
+                {
+                    <p><b>Связанные новеллы</b>:
+                    @for (int i = 0; i < vn.RelatedNovels.Count; i++)
                     {
-                        foreach (DownloadLink link in vn.Links.OrderBy(vn => vn.GamingPlatform.Id))
+                            if (i < vn.RelatedNovels.Count - 1)
                         {
-                                <div class="col-lg-4 col-xl-4 col-xxl-4 col-md-4 col-sm-12">
-                                @switch (link.GamingPlatform.Name)
-                                {
-                                    case "Windows":
-                                        <img src="~/images/windows_logo_48.png" />
-                                        <span><a target="_blank" href="@link.Url">Скачать для Windows</a></span>
-                                        break;
-                                    case "Linux":
-                                        <img src="~/images/linux_logo_48.png" />
-                                        <span><a target="_blank" href="@link.Url">Скачать для Linux</a></span>
-                                        break;
-                                    case "MacOS":
-                                        <img src="~/images/macOs_logo_48.png" />
-                                        <span><a target="_blank" href="@link.Url">Скачать для Mac</a></span>
-                                        break;
-                                    case "Android":
-                                        <img src="~/images/android_logo_48.png" />
-                                        <span><a target="_blank" href="@link.Url">Скачать для Android</a></span>
-                                        break;
-                                    case "iPhone":
-                                        <img src="~/images/iphone_logo_48.png" />
-                                        <span><a target="_blank" href="@link.Url">Скачать для IPhone</a></span>
-                                        break;
-                                    case "Web":
-                                        <img src="~/images/web_logo_48.png" />
-                                        <span><a target="_blank" href="@link.Url">Web версия</a></span>
-                                        break;
-                                }
-                            </div>
+                            <a asp-controller="Novel" asp-action="Novel" asp-route-linkName="@vn.RelatedNovels[i].RelatedVisualNovel.LinkName">@vn.RelatedNovels[i].RelatedVisualNovel.Title</a><span>,</span>
+                        }
+                        else
+                        {
+                            <a asp-controller="Novel" asp-action="Novel" asp-route-linkName="@vn.RelatedNovels[i].RelatedVisualNovel.LinkName">@vn.RelatedNovels[i].RelatedVisualNovel.Title</a>
                         }
                     }
-                    @if (vn.SteamLink != null)
-                    {
-                        <div class="col-lg-4 col-xl-4 col-xxl-4 col-md-4 col-sm-12">
-                            <img style="width: 48px; height: 48px;" src="~/images/steam_logo_48.png" />
-                            <span><a target="_blank" href="@vn.SteamLink">Визуальная новелла в Steam</a></span>
-                        </div>
+                    </p>
+                }
+
+                @if (vn.AnimeLinks != null && vn.AnimeLinks.Count > 0)
+                {
+                    <p><b>Связанные аниме</b>:
+                    @{
+                        vn.AnimeLinks.OrderBy(link => link);
                     }
-                    
-                    @if (vn.OtherLinks != null && vn.OtherLinks.Count > 0)
+                    @for (int i = 0; i < vn.AnimeLinks.Count; i++)
                     {
-                        <div class="accordion my-3" id="accordionOtherLinks">
-                            <div class="accordion-item">
-                                <h2 class="accordion-header">
-                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="false" aria-controls="collapseOne">
-                                        Дополнительные ссылки
-                                    </button>
-                                </h2>
-                                <div id="collapseOne" class="accordion-collapse collapse" data-bs-parent="#accordionOtherLinks">
-                                    <div class="accordion-body">
-                                        @foreach (var link in vn.OtherLinks)
+                        if (i < vn.AnimeLinks.Count - 1)
+                        {
+                            <a href="@vn.AnimeLinks[i].Url">@vn.AnimeLinks[i].Name</a><span>,</span>
+                        }
+                        else
+                        {
+                            <a href="@vn.AnimeLinks[i].Url">@vn.AnimeLinks[i].Name</a>
+                        }
+                    }
+                    </p>
+                }
+
+                <p><b>Дата добавления</b>: @vn.DateAdded</p>
+                <p><b>Дата обновления</b>: @vn.DateUpdated</p>
+
+                @if (vn.DownloadLinks != null && vn.DownloadLinks.Count > 0 || vn.SteamLink != null)
+                {
+                    <div class="accordion my-3" id="accordionDownloadLinks">
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseDownloadLinks" aria-expanded="false" aria-controls="collapseDownloadLinks">
+                                    Ссылки на визуальную новеллу
+                                </button>
+                            </h2>
+                            <div id="collapseDownloadLinks" class="accordion-collapse collapse" data-bs-parent="#accordionDownloadLinks">
+                                <div class="accordion-body">
+                                    @if (vn.DownloadLinks != null) 
+                                    {
+                                        @foreach (DownloadLink link in vn.DownloadLinks.OrderBy(vn => vn.GamingPlatform.Id))
                                         {
-                                            <p><a target="_blank" href="@link.Url">@link.Name</a></p>
+                                            <div class="col-lg-4 col-xl-4 col-xxl-4 col-md-4 col-sm-12">
+                                                @switch (link.GamingPlatform.Name)
+                                                {
+                                                    case "Windows":
+                                                        @* <img src="~/images/windows_logo_48.png" /> *@
+                                                        <p><a target="_blank" href="@link.Url">Скачать для Windows</a></p>
+                                                        break;
+                                                    case "Linux":
+                                                        @* <img src="~/images/linux_logo_48.png" /> *@
+                                                        <p><a target="_blank" href="@link.Url">Скачать для Linux</a></p>
+                                                        break;
+                                                    case "MacOS":
+                                                        @* <img src="~/images/macOs_logo_48.png" /> *@
+                                                        <p><a target="_blank" href="@link.Url">Скачать для Mac</a></p>
+                                                        break;
+                                                    case "Android":
+                                                        @* <img src="~/images/android_logo_48.png" /> *@
+                                                        <p><a target="_blank" href="@link.Url">Скачать для Android</a></p>
+                                                        break;
+                                                    case "iPhone":
+                                                        @* <img src="~/images/iphone_logo_48.png" /> *@
+                                                        <p><a target="_blank" href="@link.Url">Скачать для IPhone</a></p>
+                                                        break;
+                                                    case "Web":
+                                                        @* <img src="~/images/web_logo_48.png" /> *@
+                                                        <p><a target="_blank" href="@link.Url">Web версия</a></p>
+                                                        break;
+                                                }
+                                            </div>
                                         }
-                                    </div>
+                                    }
+                                    @if (vn.SteamLink != null)
+                                    {
+                                        @* <img style="width: 48px; height: 48px;" src="~/images/steam_logo_48.png" /> *@
+                                        <p><a target="_blank" href="@vn.SteamLink">Визуальная новелла в Steam</a></p>
+                                    }
+                                    @if (vn.TranslateLinkForSteam != null)
+                                    {
+                                        @* <img style="width: 48px; height: 48px;" src="~/images/steam_logo_48.png" /> *@
+                                        <p><a target="_blank" href="@vn.TranslateLinkForSteam">Руссификатор для Steam</a></p>
+                                    }
                                 </div>
                             </div>
                         </div>
-                    }
+                    </div>
+                }
+                @* <div class="row"> *@
+                @* @if (vn.Links != null)
+                {
+                foreach (DownloadLink link in vn.Links.OrderBy(vn => vn.GamingPlatform.Id))
+                {
+                <div class="col-lg-4 col-xl-4 col-xxl-4 col-md-4 col-sm-12">
+                @switch (link.GamingPlatform.Name)
+                {
+                case "Windows":
+                <img src="~/images/windows_logo_48.png" />
+                <span><a target="_blank" href="@link.Url">Скачать для Windows</a></span>
+                break;
+                case "Linux":
+                <img src="~/images/linux_logo_48.png" />
+                <span><a target="_blank" href="@link.Url">Скачать для Linux</a></span>
+                break;
+                case "MacOS":
+                <img src="~/images/macOs_logo_48.png" />
+                <span><a target="_blank" href="@link.Url">Скачать для Mac</a></span>
+                break;
+                case "Android":
+                <img src="~/images/android_logo_48.png" />
+                <span><a target="_blank" href="@link.Url">Скачать для Android</a></span>
+                break;
+                case "iPhone":
+                <img src="~/images/iphone_logo_48.png" />
+                <span><a target="_blank" href="@link.Url">Скачать для IPhone</a></span>
+                break;
+                case "Web":
+                <img src="~/images/web_logo_48.png" />
+                <span><a target="_blank" href="@link.Url">Web версия</a></span>
+                break;
+                }
                 </div>
+                }
+                }
+                @if (vn.SteamLink != null)
+                {
+                <div class="col-lg-4 col-xl-4 col-xxl-4 col-md-4 col-sm-12">
+                <img style="width: 48px; height: 48px;" src="~/images/steam_logo_48.png" />
+                <span><a target="_blank" href="@vn.SteamLink">Визуальная новелла в Steam</a></span>
+                </div>
+                } *@
+
+                @if (vn.OtherLinks != null && vn.OtherLinks.Count > 0)
+                {
+                    <div class="accordion my-3" id="accordionOtherLinks">
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="false" aria-controls="collapseOne">
+                                    Дополнительные ссылки
+                                </button>
+                            </h2>
+                            <div id="collapseOne" class="accordion-collapse collapse" data-bs-parent="#accordionOtherLinks">
+                                <div class="accordion-body">
+                                    @foreach (var link in vn.OtherLinks)
+                                    {
+                                        <p><a target="_blank" href="@link.Url">@link.Name</a></p>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+                @* </div> *@
             </div>
         </div>
         <div>
@@ -355,133 +678,179 @@
                     <button class="nav-link active" id="description-tab" data-bs-toggle="tab" data-bs-target="#description-tab-pane" type="button" role="tab" aria-controls="description-tab-pane" aria-selected="true">Описание</button>
                 </li>
                 <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="tags-tab" data-bs-toggle="tab" data-bs-target="#tags-tab-pane" type="button" role="tab" aria-controls="tags-tab-pane" aria-selected="false">Теги</button>
+                    <button class="nav-link" id="tags-tab" data-bs-toggle="tab" data-bs-target="#tags-tab-pane" type="button" onclick="loadTagsMetadata(@vn.Id, 0)" role="tab" aria-controls="tags-tab-pane" aria-selected="false">Теги</button>
                 </li>
+                @if (vn.SoundtrackYoutubePlaylistLink != null)
+                {
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="sountrack-tab" data-bs-toggle="tab" data-bs-target="#sountrack-tab-pane" type="button" role="tab" aria-controls="soundtrag-tab-pane" aria-selected="false">Саундтрек</button>
+                    </li>
+                }
             </ul>
             <div class="tab-content" id="myTabContent">
                 <div class="tab-pane fade show active" id="description-tab-pane" role="tabpanel" aria-labelledby="description-tab" tabindex="0">
                     <div>
-                        <p>@vn.Description</p>
+                        @{
+                            string description = vn.Description.Replace("\r\n","<br>"); // TODO Change on server
+                        }
+                        <p class="text-start p-3">@Html.Raw(description)</p>
                     </div>
-                    @{
-                        string[] screenshotsPathes = ViewBag.ScreenshotsData;
-
-                        if (screenshotsPathes != null)
+                        @if (vn.ScreenshotLinks != null)
                         {
-                            <div class="fotorama d-flex justify-content-center" data-nav="thumbs" data-autoplay="true" data-arrows="true" data-swipe="true" data-click="false">
-
-                                @foreach (string path in screenshotsPathes)
+                            <div class="f-carousel" id="myCarousel">
+                                @foreach (string path in vn.ScreenshotLinks)
                                 {
-                                    string query = ViewBag.GetImageByPathURL + path;
-
-                                    <div data-img="@query"><a href="@query" data-fancybox=></a></div>
-
+                                    string coverImageUrl = @s3Url + path;
+                                    <div data-thumb-src="@coverImageUrl" class="f-carousel__slide">
+                                        <a data-fancybox="gallery" href="@coverImageUrl"><img src="@coverImageUrl" /></a>
+                                    </div>
                                 }
                             </div>
                         }
-                    }
                 </div>
                 <div class="tab-pane fade" id="tags-tab-pane" role="tabpanel" aria-labelledby="tags-tab" tabindex="0">
-                    @* <p style="float: right">
-                        <a>Скрыть спойлеры</a>
-                        <a>Небольшие спойлеры</a>
-                        <a>Все спойлеры</a>
-                    </p> *@
-                    <ul class="tags-column">
-                        @{
-                            var contTags = vn.Tags.Where(t => t.Tag.Category == TagCategory.cont).OrderBy(t => t.Tag.Name);
-                            var techTags = vn.Tags.Where(t => t.Tag.Category == TagCategory.tech).OrderBy(t => t.Tag.Name);
-                            var eroTags = vn.Tags.Where(t => t.Tag.Category == TagCategory.ero).OrderBy(t => t.Tag.Name);
-
-                            <li class="tags-column-parent">Контент</li>
-
-                            foreach (TagMetadata tag in contTags)
-                            {
-                                switch (tag.SpoilerLevel)
-                                {
-                                    case SpoilerLevel.None:
-                                        <li class="tags-column-item">
-                                            <a id="tags-spoiler-none" asp-controller="Novel" asp-action="FiltredBy" asp-route-id="@tag.Tag.Id" asp-route-filter="1">@tag.Tag.Name</a>
-                                        </li>
-                                        break;
-                                    case SpoilerLevel.Minor:
-                                        <li class="tags-column-item">
-                                            <a id="tags-spoiler-minor" asp-controller="Novel" asp-action="FiltredBy" asp-route-id="@tag.Tag.Id" asp-route-filter="1">@tag.Tag.Name<sup style="font-size: 14px">S</sup></a>
-                                        </li>
-                                        break;
-                                    case SpoilerLevel.Major:
-                                        <li class="tags-column-item">
-                                            <a id="tags-spoiler-major" asp-controller="Novel" asp-action="FiltredBy" asp-route-id="@tag.Tag.Id" asp-route-filter="1">@tag.Tag.Name<sup style="color: red; font-size: 14px">S</sup></a>
-                                        </li>
-                                        break;
-                                    default:
-                                        break;
-                                }
-                            }
-
-                            <li class="tags-column-parent">Техническое</li>
-
-                            foreach (TagMetadata tag in techTags)
-                            {
-                                switch (tag.SpoilerLevel)
-                                {
-                                    case SpoilerLevel.None:
-                                        <li class="tags-column-item">
-                                            <a id="tags-spoiler-none" asp-controller="Novel" asp-action="FiltredBy" asp-route-id="@tag.Tag.Id" asp-route-filter="1">@tag.Tag.Name</a>
-                                        </li>
-                                        break;
-                                    case SpoilerLevel.Minor:
-                                        <li class="tags-column-item">
-                                            <a id="tags-spoiler-minor" asp-controller="Novel" asp-action="FiltredBy" asp-route-id="@tag.Tag.Id" asp-route-filter="1">@tag.Tag.Name<sup style="font-size: 14px">S</sup></a>
-                                        </li>
-                                        break;
-                                    case SpoilerLevel.Major:
-                                        <li class="tags-column-item">
-                                            <a id="tags-spoiler-major" asp-controller="Novel" asp-action="FiltredBy" asp-route-id="@tag.Tag.Id" asp-route-filter="1">@tag.Tag.Name<sup style="color: red; font-size: 14px">S</sup></a>
-                                        </li>
-                                        break;
-                                    default:
-                                        break;
-                                }
-                            }
-
-                            // <li class="tags-column-parent">Сексуальный контент</li>
-
-                            // foreach (TagMetadata tag in eroTags)
-                            // {
-                            //     switch (tag.SpoilerLevel)
-                            //     {
-                            //         case SpoilerLevel.None:
-                            //             <li class="tags-column-item">
-                            //                 <a id="tags-spoiler-none" asp-controller="Novel" asp-action="FiltredBy" asp-route-id="@tag.Tag.Id" asp-route-filter="1">@tag.Tag.Name</a>
-                            //             </li>
-                            //             break;
-                            //         case SpoilerLevel.Minor:
-                            //             <li class="tags-column-item">
-                            //                 <a id="tags-spoiler-minor" asp-controller="Novel" asp-action="FiltredBy" asp-route-id="@tag.Tag.Id" asp-route-filter="1">@tag.Tag.Name<sup style="font-size: 14px">S</sup></a>
-                            //             </li>
-                            //             break;
-                            //         case SpoilerLevel.Major:
-                            //             <li class="tags-column-item">
-                            //                 <a id="tags-spoiler-major" asp-controller="Novel" asp-action="FiltredBy" asp-route-id="@tag.Tag.Id" asp-route-filter="1">@tag.Tag.Name<sup style="color: red; font-size: 14px">S</sup></a>
-                            //             </li>
-                            //             break;
-                            //         default:
-                            //             break;
-                            //     }
-                            // }
-                        }
-                </ul>
+                    <div id="spoilerLevelSelect" class="mt-2 grid-gap">
+                        <button id="btnNoneSpoilerLevel" onclick="loadTagsMetadata(@vn.Id, 0)" class="btn btn-primary" disabled>Без спойлеров</button>
+                        <button id="btnMinorSpoilerLevel" onclick="loadTagsMetadata(@vn.Id, 1)" class="btn btn-primary">Незначительные спойлеры</button>
+                        <button id="btnMajorSpoilerLevel" onclick="loadTagsMetadata(@vn.Id, 2)" class="btn btn-danger">Все спойлеры</button>
+                    </div>
+                    <div class="d-flex justify-content-center mt-2" id="liveAlertPlaceholder"></div>
+                    <div id="tags-column-container">
+                    </div>
                 </div>
+                @if (vn.SoundtrackYoutubePlaylistLink != null)
+                {
+                    <div class="tab-pane fade" id="sountrack-tab-pane" role="tabpanel" aria-labelledby="sountrack-tab" tabindex="0">
+                        <div>
+                            @await Html.PartialAsync("_YoutubeIFramePartial", vn.SoundtrackYoutubePlaylistLink)
+                        </div>
+                    </div>
+                }
             </div>
         </div>
+        
     </div>
 </div>
-<script src="@fancyappsScript"></script>
+
+<div class="vn-page mt-3" style="background: rgba(30,30,30, 0.8)" id="comment-section">
+</div>
+
 <script>
-    Fancybox.bind("[data-fancybox]", {
+    document.addEventListener("DOMContentLoaded", function () {
+        var url = "/Comment?visualNovelId=" + '@vn.Id';
+        var xhr = new XMLHttpRequest();
+        xhr.open("GET", url, true);
+        xhr.onreadystatechange = function () {
+            if (xhr.readyState === 4) {
+                if (xhr.status === 200) {
+                    document.getElementById('comment-section').innerHTML = xhr.responseText;
 
+                    enableToggleSpoilers();
+                }
+            }
+        };
+        xhr.send();
     });
-
 </script>
 
+@if (currentUser != null)
+{
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            enableLabelsSelect('@currentUser.Id', @vn.Id);
+            trackVisitor('@vn.Id');
+        });
+
+        var ratingRadioButtons = document.getElementsByClassName('rating-area')[0].querySelectorAll('input');
+        var isHaveRating = @isHaveRating.ToString().ToLower()
+        var deleteRatingButton = document.getElementById('delete-rating-button');
+
+        if (deleteRatingButton) {
+            deleteRatingButton.addEventListener('click', function () {
+                var url = "/User/RemoveUserRating?userId=" + '@currentUser.Id' + "&visualNovelId=" + '@vn.Id';
+                var xhr = new XMLHttpRequest();
+                xhr.open("DELETE", url, true);
+                xhr.onreadystatechange = function () {
+                    if (xhr.readyState === 4) {
+                        if (xhr.status === 200) {
+                            loadToast("Рейтинг удален", true);
+
+                            deleteRatingButton.classList.add('d-none');
+                            ratingRadioButtons.forEach(function (e) {
+                                e.checked = false;
+                            });
+
+                            isHaveRating = false;
+                        } else {
+                            loadToast("Ошибка при удалении рейтинга", false);
+                        }
+                    }
+                };
+                xhr.send();
+            });
+        }
+
+        ratingRadioButtons.forEach(function (e) {
+            e.addEventListener('click', function () {
+                if (isHaveRating) {
+                    var url = "/User/UpdateUserRating?userId=" + '@currentUser.Id' + "&visualNovelId=" + '@vn.Id' + "&rating=" + e.value;
+                    var xhr = new XMLHttpRequest();
+                    xhr.open("POST", url, true);
+                    xhr.onreadystatechange = function () {
+                        if (xhr.readyState === 4) {
+                            if (xhr.status === 200) {
+                                loadToast("Рейтинг изменен", true);
+                                if (deleteRatingButton) {
+                                    deleteRatingButton.classList.remove('d-none');
+                                    isHaveRating = true;
+                                }
+                            } else {
+                                loadToast("Ошибка при изменении рейтинга", false);
+                            }
+                        }
+                    };
+                    xhr.send();
+                }
+                else {
+                    var url = "/User/AddUserRating?userId=" + '@currentUser.Id' + "&visualNovelId=" + '@vn.Id' + "&rating=" + e.value;
+                    var xhr = new XMLHttpRequest();
+                    xhr.open("PUT", url, true);
+                    xhr.onreadystatechange = function () {
+                        if (xhr.readyState === 4) {
+                            if (xhr.status === 200) {
+                                loadToast("Рейтинг добавлен", true);
+                                if (deleteRatingButton) {
+                                    deleteRatingButton.classList.remove('d-none');
+                                    isHaveRating = true;
+                                }
+                            } else {
+                                loadToast("Ошибка при добавлении рейтинга", false);
+                            }
+                        }
+                    };
+                    xhr.send();
+                }
+            })
+        });
+    </script>
+}
+
+@*Fancybox launch*@
+<script src="@fancyappsScript"></script>
+<script>
+    const container = document.getElementById("myCarousel");
+
+    const options = {
+        Thumbs: {
+            type: "modern",
+        },
+        Dots: false
+    };
+
+    new Carousel(container, options, { Thumbs });
+
+    Fancybox.bind('[data-fancybox="gallery"]', {
+
+    });
+</script>
+@*Fancybox launch*@

@@ -1,0 +1,33 @@
+﻿@using NovelSite.Models.Novel;
+@model NovelSite.Models.Novel.VisualNovelList
+<div class="modal fade" id="editVisualNovelList" tabindex="-1" aria-labelledby="editVisualNovelListLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content vn-page">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editVisualNovelListLabel">Редактировать список @Model.Name</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form method="post" asp-controller="User" asp-action="EditVisualNovelList">
+                    <input asp-for="UserId" value="@Model.UserId" name="UserId" class="form-control" aria-required="true" hidden/>
+                    <input id="edit-novel-list-is-custom" asp-for="IsCustom" type="checkbox" name="IsCustom" class="form-control" aria-required="true" hidden />
+                    <input id="edit-novel-list-id" asp-for="Id" value="@Model.Id" class="form-control" name="Id" aria-required="true" hidden/>
+                    <div>
+                        <label asp-for="Name" class="form-label"></label>
+                        <input id="edit-novel-list-name" asp-for="Name" autocomplete="off" asp-for="@Model.Name" name="Name" class="form-control" aria-required="true" />
+                        <span asp-validation-for="Name" class="text-danger"></span>
+                    </div>
+                    <div class="mt-2">
+                        <input id="edit-novel-list-is-private" asp-for="@Model.IsPrivate" name="IsPrivate" type="checkbox" class="form-check-input" />
+                        <label asp-for="IsPrivate" class="form-label form-check-label"></label>
+                        <span asp-validation-for="IsPrivate" class="text-danger"></span>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Изменить</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+
+</script>

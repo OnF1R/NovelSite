@@ -1,19 +1,22 @@
 ﻿@page
 @model RegisterModel
 @{
-    ViewData["Title"] = "Register";
+    ViewData["Title"] = "Регистрация";
 }
 
 <h1 class="text-center">@ViewData["Title"]</h1>
 
 @* <div class="row"> *@
 <div class="d-flex align-items-center justify-content-center">
-    <form id="registerForm" asp-route-returnUrl="@Model.ReturnUrl" method="post">
-        <h2>Create a new account.</h2>
-        <hr />
+    <form id="registerForm" asp-route-returnUrl="@Model.ReturnUrl" method="post" enctype="multipart/form-data">
         <div asp-validation-summary="ModelOnly" class="text-danger"></div>
         <div class="form-floating m-2">
-            <input asp-for="Input.Email" class="form-control" autocomplete="username" aria-required="true" />
+            <input asp-for="Input.Username" class="form-control" autocomplete="username" aria-required="true" />
+            <label asp-for="Input.Username"></label>
+            <span asp-validation-for="Input.Username" class="text-danger"></span>
+        </div>
+        <div class="form-floating m-2">
+            <input asp-for="Input.Email" class="form-control" autocomplete="email" aria-required="true" />
             <label asp-for="Input.Email"></label>
             <span asp-validation-for="Input.Email" class="text-danger"></span>
         </div>
@@ -27,7 +30,12 @@
             <label asp-for="Input.ConfirmPassword"></label>
             <span asp-validation-for="Input.ConfirmPassword" class="text-danger"></span>
         </div>
-        <button id="registerSubmit" type="submit" class="w-100 btn btn-lg btn-primary">Register</button>
+        <div class="m-2">
+            <label asp-for="Input.Avatar"></label>
+            <input asp-for="Input.Avatar" class="form-control" type="file" aria-required="false" />
+            <span asp-validation-for="Input.Avatar" class="text-danger"></span>
+        </div>
+        <button id="registerSubmit" type="submit" class="w-100 btn btn-lg btn-primary">Регистрация</button>
     </form>
 </div>
 @* <div class="col-md-6 col-md-offset-2">

@@ -1,0 +1,82 @@
+﻿@using Microsoft.AspNetCore.Identity;
+@using NovelSite.Data.Identity;
+@using NovelSite.Services.Queries;
+@inject SignInManager<ApplicationIdentityUser> SignInManager;
+@inject UserManager<ApplicationIdentityUser> UserManager;
+
+@model NovelSite.Models.Prolife.UserProfileViewModel;
+@{
+    ViewData["Title"] = $"Профиль {@Model.Username}";
+
+    ApplicationIdentityUser currentUser = null;
+    ApplicationIdentityUser profileOwner = await UserManager.FindByNameAsync(Model.Username);
+
+    if (profileOwner == null)
+        return;
+
+    bool isOwner = false;
+    @if (SignInManager.IsSignedIn(User))
+    {
+        currentUser = await UserManager.GetUserAsync(User);
+        isOwner = currentUser == profileOwner;
+    }
+
+    ViewData["MetaDescription"] = $"Профиль пользователя - {Model.Username}";
+    ViewData["MetaKeywords"] = $"Профиль, {Model.Username}, Astral-Novel";
+
+    // Open Graph tags
+    ViewData["OgTitle"] = $"Профиль пользователя - {Model.Username}";
+    ViewData["OgImage"] = profileOwner.AvatarFileName;
+    ViewData["OgUrl"] = Globals.GetFullUrl(Context);
+}
+
+<div class="container">
+    <div class="row mobile-centered">
+        <div class="col">
+            <h2>Профиль @Model.Username</h2>
+            <div><img class="rounded-profile-image" src="@Model.AvatarUrl" alt="Avatar" /></div>
+        </div>
+        <div class="col">
+            @if (isOwner)
+            {
+                <form class="row" method="post" asp-controller="User" asp-action="UpdateUserAvatar" enctype="multipart/form-data">
+                    <div>
+                        <label for="inputFile">Изменить аватар</label>
+                        <div class="col-auto">
+                            <input type="file" class="form-control" id="inputFile" name="file">
+                        </div>
+                        <div class="col-auto">
+                            <button type="submit" class="btn btn-primary">Изменить</button>
+                        </div>
+                    </div>
+                </form>
+            }
+        </div>
+    </div>
+    <div>
+        <h2>Списки визуальных новелл @Model.Username</h2>
+        @if (isOwner)
+        {
+            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addVisualNovelList">
+                Новый список
+            </button>
+            <button type="button" class="btn btn-primary" data-bs-toggle="collapse" data-bs-target="#collapseEditLists" aria-expanded="false" aria-controls="collapseEditLists">
+                Редактировать списки
+            </button>
+            <div class="collapse" id="collapseEditLists">
+                <div id="edit-novel-lists-collapse" class="mt-2">
+                    @await Html.PartialAsync("_EditListsPartial", Model.VisualNovelLists)
+                </div>
+            </div>
+        }
+        <div id="main-novel-lists-container" class="mt-2">
+            @await Html.PartialAsync("_UserVisualNovelListsPartial")
+        </div>
+    </div>
+</div>
+
+@if (isOwner)
+{
+    @await Html.PartialAsync("_AddCustomListPartial", new NovelSite.Models.Novel.VisualNovelList() { UserId = profileOwner.Id })
+    @await Html.PartialAsync("_EditListPartial", new NovelSite.Models.Novel.VisualNovelList() { UserId = profileOwner.Id })
+}

@@ -1,0 +1,32 @@
+﻿@using NovelSite.Models.Novel;
+@model List<VisualNovelListEntry>
+
+ @{
+    @* List<VisualNovelListEntry> vnInList = ViewBag.VisualNovelsInList; *@
+    string s3Url = $"https://2f58d602-2c33-481e-875b-700b4d4b3263.selstorage.ru/";
+}
+
+<div class="row">
+    @if (Model != null && Model.Count() > 0)
+    {
+        @foreach (var vnEntry in Model)
+        {
+            <div class="col-xxl-4 col-xl-4 col-lg-4 col-md-4 col-sm-6">
+                @{ string coverImageUrl = $"{@s3Url}{vnEntry.VisualNovel.CoverImageLink}"; }
+
+                <div class="position-relative">
+                    <a asp-controller="Novel" asp-action="Novel" asp-route-linkName="@vnEntry.VisualNovel.LinkName">
+                        <img loading="lazy" src="@coverImageUrl" class="w-100" />
+                    </a>
+                    <a asp-controller="Novel" asp-action="Novel" asp-route-linkName="@vnEntry.VisualNovel.LinkName">@vnEntry.VisualNovel.Title</a>
+                </div>
+            </div>
+        }
+    }
+    else
+    {
+        <div class="col-xxl-12 col-xl-12 col-lg-12 col-md-12 col-sm-12 d-flex">
+            <p class="justify-content-center">Список пуст :(</p>
+        </div>
+    }
+</div>

@@ -1,9 +1,11 @@
 ﻿
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using NovelSite.Models;
+using NovelSite.Data.Identity;
+using NovelSite.Models.Novel;
 using NovelSite.Services.Extensions;
 using NovelSite.Services.Queries;
-using System.Text;
 
 
 namespace NovelSite.Controllers
@@ -11,96 +13,90 @@ namespace NovelSite.Controllers
     public class NovelController : Controller
     {
         // GET: NovelController
-        private const string API_URL = "https://localhost:7022/api/";
-        private const string COVER_IMAGE_URL = "https://localhost:7022/api/VisualNovel/GetCoverImage?id=";
-        private const string BACKGROUND_IMAGE_URL = "https://localhost:7022/api/VisualNovel/GetBackgroundImage?id=";
-        private const string SCREENSHOTS_DATA_URL = "https://localhost:7022/api/VisualNovel/GetScreenshots?id=";
-        private const string GET_IMAGE_BY_PATH_URL = "https://localhost:7022/api/VisualNovel/GetImageByPath?path=";
+        private readonly UserManager<ApplicationIdentityUser> _userManager;
+
+        //private const string Globals.API_URL = "http://localhost:80/api/"; //Testing Docker
+        private const string COVER_IMAGE_URL = Globals.API_URL + "VisualNovel/GetCoverImage?id=";
+        private const string BACKGROUND_IMAGE_URL = Globals.API_URL + "VisualNovel/GetBackgroundImage?id=";
+        private const string SCREENSHOTS_DATA_URL = Globals.API_URL + "VisualNovel/GetScreenshots?id=";
+        private const string GET_IMAGE_BY_PATH_URL = Globals.API_URL + "VisualNovel/GetImageByPath?path=";
         private const long MAX_IMAGE_SIZE = 4194304;
 
-        [Route("Novel/{id}-{spoilerLevel}")]
-        [ResponseCache(Duration = 30, Location = ResponseCacheLocation.Client)]
-        public async Task<IActionResult> Novel(int id, SpoilerLevel spoilerLevel)
+        public NovelController(UserManager<ApplicationIdentityUser> userManager)
         {
-            var vn = await HttpQueries.GetVisualNovel(id, spoilerLevel);
+            _userManager = userManager;
+        }
+
+        //[Route("Novel/{id}")]
+        //public async Task<IActionResult> Novel(int id)
+        //{
+        //    var vn = await HttpQueries.GetVisualNovel(id);
+
+        //    if (vn == null)
+        //    {
+        //        return NotFound();
+        //    }
+
+        //    ViewBag.Vn = vn;
+        //    var rating = await HttpQueries.GetVisualNovelRating(id);
+        //    ViewBag.VnAverageRating = rating.Item1;
+        //    ViewBag.VnRatingCount = rating.Item2;
+
+        //    return View();
+        //}
+
+        [Route("Novel/Random")]
+        public async Task<IActionResult> GetRandom()
+        {
+            var vn = await HttpQueries.GetRandomVisualNovel();
+
+            if (vn == null)
+            {
+                return NotFound();
+            }
+
+            return RedirectToAction("Novel", "Novel", new { linkName = vn.LinkName });
+        }
+
+        [Route("Novel/{linkName}")]
+        public async Task<IActionResult> Novel(string linkName)
+        {
+            var vn = await HttpQueries.GetVisualNovel(linkName);
+
+            if (vn == null)
+            {
+                return NotFound();
+            }
+
             ViewBag.Vn = vn;
-            var rating = await HttpQueries.GetVisualNovelRating(id);
+            var rating = await HttpQueries.GetVisualNovelRating(vn.Id);
             ViewBag.VnAverageRating = rating.Item1;
             ViewBag.VnRatingCount = rating.Item2;
-            ViewBag.CoverImage = COVER_IMAGE_URL + $"{id}";
-            ViewBag.BackgroundImage = BACKGROUND_IMAGE_URL + $"{id}";
-            ViewBag.ScreenshotsData = await HttpQueries.GetScreenshotsPathes(id);
-            ViewBag.GetImageByPathURL = GET_IMAGE_BY_PATH_URL;
 
             return View();
         }
 
-        [Route("Filter/{id}-{filter}")]
-        public async Task<IActionResult> FiltredBy(int id, int filter)
+        [Route("Novels")]
+        public async Task<IActionResult> Novels()
         {
-            try
-            {
-                List<VisualNovel> vns = null;
-                StringBuilder sb = new StringBuilder();
+            ViewBag.Tags = await HttpQueries.GetAllTags();
+            ViewBag.Platforms = await HttpQueries.GetGamingPlatforms();
+            ViewBag.Languages = await HttpQueries.GetLanguages();
+            ViewBag.Genres = await HttpQueries.GetGenres();
 
-                switch (filter)
-                {
-                    case 1:
-                        vns = await HttpQueries.GetVisualNovelWithTag(id);
-                        Tag tag = await HttpQueries.GetTag(id);
-                        sb.Append($"Визуальные новеллы с тегом: {tag.Name}");
-                        break;
-                    case 2:
-                        vns = await HttpQueries.GetVisualNovelWithGenre(id);
-                        Genre genre = await HttpQueries.GetGenre(id);
-                        sb.Append($"Визуальные новеллы с жанром: {genre.Name}");
-                        break;
-                    case 3:
-                        vns = await HttpQueries.GetVisualNovelWithLanguage(id);
-                        Language language = await HttpQueries.GetLanguage(id);
-                        sb.Append($"Визуальные новеллы на языке: {language.Name}");
-                        break;
-                    case 4:
-                        vns = await HttpQueries.GetVisualNovelWithGamingPlatform(id);
-                        GamingPlatform gamingPlatform = await HttpQueries.GetGamingPlatform(id);
-                        sb.Append($"Визуальные новеллы на {gamingPlatform.Name}");
-                        break;
-                    default:
-                        break;
-                }
-
-                ViewBag.Vns = vns;
-                ViewBag.Message = sb.ToString();
-
-                return View();
-            }
-            catch (Exception)
-            {
-                throw;
-            }
-        }
-
-        public async Task<IActionResult> Search(string query)
-        {
-            var vns = await HttpQueries.SearchVisualNovel(query);
-
-            if (vns == null)
-            {
-                RedirectToAction("Index"); // TODO
-            }
-
-            if (vns.Count == 1)
-            {
-                var vn = vns.First();
-
-                return RedirectToAction("Novel", "Novel", new { id = vn.Id, spoilerLevel = SpoilerLevel.None });
-            }
-
-            ViewBag.Vns = vns;
-
-            ViewBag.Message = $"Найдено совпадение по запросу: {query}";
+            //ViewBag.Vns = await HttpQueries.GetVisualNovelsWithRatingsFiltred(itemPerPage: 3);
 
             return View();
+        }
+
+        [Route("Novel/Tags")]
+        public async Task<IActionResult> GetVisualNovelTagsMetadata(int visualNovelId, SpoilerLevel spoilerLevel)
+        {
+            var tagsMetadata = await HttpQueries.GetVisualNovelTagsMetadata(visualNovelId, spoilerLevel);
+
+            ViewBag.TagsMetadata = tagsMetadata;
+
+            return PartialView("_VisualNovelTagsMetadataPartial");
         }
 
         // GET: NovelController/Details/5
@@ -109,11 +105,44 @@ namespace NovelSite.Controllers
             return View();
         }
 
+        [Authorize(Roles = "Admin")]
+        [Route("Novel/CreateFromJson")]
+        public async Task<IActionResult> CreateFromJson()
+        {
+            return View();
+        }
+
+        
+        [Authorize(Roles = "Admin")] // TODO
+        [HttpPost]
+        [Route("Novel/CreateFromJson")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CreateFromJson(VisualNovelFromJsonRequest vnRequest)
+        {
+            try
+            {
+                if (ModelState.IsValid)
+                {
+                    VisualNovel vndb = await HttpQueries.AddVisualNovelFromJson(vnRequest);
+
+                    return RedirectToAction("Novel", "Novel", new { linkName = vndb.LinkName });
+                }
+
+                return View(vnRequest);
+            }
+            catch
+            {
+                throw;
+                //return View();
+            }
+        }
+
         // GET: NovelController/Create
+        [Authorize(Roles = "Admin")] // TODO
         [Route("Novel/Create")]
         public async Task<IActionResult> Create()
         {
-            ViewBag.Tags = await HttpQueries.GetTags(1, 50);
+            ViewBag.Tags = await HttpQueries.GetAllTags();
             ViewBag.Platforms = await HttpQueries.GetGamingPlatforms();
             ViewBag.Languages = await HttpQueries.GetLanguages();
             ViewBag.Genres = await HttpQueries.GetGenres();
@@ -127,6 +156,7 @@ namespace NovelSite.Controllers
 
         [Route("Novel/CreateAuthor")]
         [HttpPost]
+        [Authorize(Roles = "Admin")] // TODO
         [ValidateAntiForgeryToken]
         public async Task CreateAuthor(AuthorRequest authorRequest)
         {
@@ -143,58 +173,72 @@ namespace NovelSite.Controllers
 
         // POST: NovelController/Create
         [Route("Novel/Create")]
+        [Authorize(Roles = "Admin")] // TODO
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(VisualNovelRequest vnRequest)
         {
             try
             {
-                using (MemoryStream ms = new MemoryStream())
+                if (ModelState.IsValid)
                 {
-                    if (vnRequest.CoverImage != null)
-                    {
-                        vnRequest.CoverImage.CopyTo(ms);
-                        var byteImage = ms.ToArray();
+                    //using (MemoryStream ms = new MemoryStream())
+                    //{
+                    //    if (vnRequest.CoverImage != null)
+                    //    {
+                    //        vnRequest.CoverImage.CopyTo(ms);
+                    //        var byteImage = ms.ToArray();
 
-                        if (byteImage.Length > MAX_IMAGE_SIZE || ImageFormatExtension.GetImageFormat(byteImage) == ImageFormat.unknown)
-                        {
-                            return null;
-                        }
-                    }
+                    //        if (byteImage.Length > MAX_IMAGE_SIZE || ImageFormatExtension.GetImageFormat(byteImage) == ImageFormat.unknown)
+                    //        {
+                    //            return null;
+                    //        }
+                    //    }
+                    //}
+
+                    //using (MemoryStream ms = new MemoryStream())
+                    //{
+                    //    if (vnRequest.BackgroundImage != null)
+                    //    {
+                    //        vnRequest.BackgroundImage.CopyTo(ms);
+                    //        var byteImage = ms.ToArray();
+
+                    //        if (byteImage.Length > MAX_IMAGE_SIZE || ImageFormatExtension.GetImageFormat(byteImage) == ImageFormat.unknown)
+                    //        {
+                    //            return null;
+                    //        }
+                    //    }
+                    //}
+
+                    //if (vnRequest.Screenshots != null)
+                    //{
+                    //    foreach (IFormFile file in vnRequest.Screenshots)
+                    //    {
+                    //        using MemoryStream ms = new MemoryStream();
+                    //        file.CopyTo(ms);
+                    //        var byteImage = ms.ToArray();
+
+                    //        if (byteImage.Length > MAX_IMAGE_SIZE || ImageFormatExtension.GetImageFormat(byteImage) == ImageFormat.unknown)
+                    //        {
+                    //            return null;
+                    //        }
+                    //    }
+                    //}
+
+                    VisualNovel vndb = await HttpQueries.AddVisualNovel(vnRequest);
+
+                    return RedirectToAction("Novel", "Novel", new { linkName = vndb.LinkName });
                 }
 
-                using (MemoryStream ms = new MemoryStream())
-                {
-                    if (vnRequest.BackgroundImage != null)
-                    {
-                        vnRequest.BackgroundImage.CopyTo(ms);
-                        var byteImage = ms.ToArray();
+                ViewBag.Tags = await HttpQueries.GetAllTags();
+                ViewBag.Platforms = await HttpQueries.GetGamingPlatforms();
+                ViewBag.Languages = await HttpQueries.GetLanguages();
+                ViewBag.Genres = await HttpQueries.GetGenres();
 
-                        if (byteImage.Length > MAX_IMAGE_SIZE || ImageFormatExtension.GetImageFormat(byteImage) == ImageFormat.unknown)
-                        {
-                            return null;
-                        }
-                    }
-                }
+                ViewBag.Authors = await HttpQueries.GetAuthors();
+                ViewBag.Translators = await HttpQueries.GetTranslators();
 
-                if (vnRequest.Screenshots != null)
-                {
-                    foreach (IFormFile file in vnRequest.Screenshots)
-                    {
-                        using MemoryStream ms = new MemoryStream();
-                        file.CopyTo(ms);
-                        var byteImage = ms.ToArray();
-
-                        if (byteImage.Length > MAX_IMAGE_SIZE || ImageFormatExtension.GetImageFormat(byteImage) == ImageFormat.unknown)
-                        {
-                            return null;
-                        }
-                    }
-                }
-
-                VisualNovel vndb = await HttpQueries.AddVisualNovel(vnRequest);
-
-                return RedirectToAction("Novel", "Novel", new { id = vndb.Id, spoilerLevel = SpoilerLevel.None });
+                return View(vnRequest);
             }
             catch
             {
@@ -204,28 +248,49 @@ namespace NovelSite.Controllers
         }
 
         // GET: NovelController/Edit/5
-        public async Task <IActionResult> Edit(int id)
+        [Route("Novel/Edit/{linkName}")]
+        [Authorize(Roles = "Admin")] // TODO
+        public async Task <IActionResult> Edit(string linkName)
         {
-            ViewBag.Vn = await HttpQueries.GetVisualNovel(id, SpoilerLevel.Major);
-            ViewBag.Tags = await HttpQueries.GetTags(1, 50);
+            var vn = await HttpQueries.GetVisualNovel(linkName);
+            var currentUser = await _userManager.GetUserAsync(User);
+
+            bool isAlowed = false;
+
+            if (currentUser.Id != vn.AdddeUserId.ToString())
+                isAlowed = false; else isAlowed = true;
+
+            if (User.IsInRole("Admin"))
+                isAlowed = true;
+
+            if (!isAlowed)
+                return NotFound();
+
+            ViewBag.Vn = vn;
+            ViewBag.Tags = await HttpQueries.GetAllTags();
             ViewBag.Platforms = await HttpQueries.GetGamingPlatforms();
             ViewBag.Languages = await HttpQueries.GetLanguages();
             ViewBag.Genres = await HttpQueries.GetGenres();
             ViewBag.Authors = await HttpQueries.GetAuthors();
             ViewBag.Translators = await HttpQueries.GetTranslators();
+            ViewBag.VnTags = await HttpQueries.GetVisualNovelTagsMetadata(vn.Id, SpoilerLevel.Major);
             return View();
         }
 
         // POST: NovelController/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, VisualNovelRequest vnRequest)
+        [Route("Novel/Edit/{linkName}")]
+        [Authorize(Roles = "Admin")] // TODO
+        public async Task<IActionResult> Edit(string linkName, VisualNovelRequest vnRequest)
         {
             try
             {
-                await HttpQueries.UpdateVisualNovel(id, vnRequest);
+                var vn = await HttpQueries.GetVisualNovel(linkName);
 
-                return RedirectToAction("Novel", "Novel", new { id = id, spoilerLevel = SpoilerLevel.None });
+                await HttpQueries.UpdateVisualNovel(vn.Id, vn, vnRequest);
+
+                return RedirectToAction("Novel", "Novel", new { linkName });
             }
             catch
             {
@@ -234,7 +299,7 @@ namespace NovelSite.Controllers
         }
 
         // GET: NovelController/Delete/5
-        public ActionResult Delete(int id)
+        public ActionResult Delete(string linkName)
         {
             return View();
         }
@@ -242,6 +307,7 @@ namespace NovelSite.Controllers
         // POST: NovelController/Delete/5
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin")] // TODO
         public ActionResult Delete(int id, IFormCollection collection)
         {
             try

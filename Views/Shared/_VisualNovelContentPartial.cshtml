@@ -1,76 +1,48 @@
-﻿@{
+﻿@using NovelSite.Models.Novel;
+
+@{
     VisualNovelWithRatingResult result = ViewBag.Vns;
     List<VisualNovelWithRating> vns = result.Result;
-    string url = "https://localhost:7022/api/VisualNovel/GetCoverImage?id=";
 }
+
 
 @foreach (var vnr in vns)
 {
-    <div class="card col-md-4 mt-4 col-lg-4">
-        <div class="box py-2">
-            @if (vnr.VisualNovel.CoverImagePath != null)
+    <div class="vn-card position-relative vn-card-filtred mt-3 col-md-3 col-lg-3 col-6">
+        <div class="box">
+            @if (vnr.VisualNovel.CoverImageLink != null)
             {
-                <img loading="lazy" src="@url + @vnr.VisualNovel.Id.ToString()" class="home_cover_image">
+                string coverImageUrl = $"https://2f58d602-2c33-481e-875b-700b4d4b3263.selstorage.ru/" +
+                $"{vnr.VisualNovel.CoverImageLink}";
+                <a asp-controller="Novel" asp-action="Novel" asp-route-linkName="@vnr.VisualNovel.LinkName" title="@vnr.VisualNovel.Title"><img loading="lazy" src="@coverImageUrl" class="home_cover_image" /></a>
             }
             else
             {
                 <img loading="lazy" src="~/images/thumbnail.png" class="home_cover_image">
             }
-            <h1>@vnr.VisualNovel.Title</h1>
-            @if (vnr.NumberOfRatings > 0)
-            {
-                <p>Рейтинг: @vnr.AverageRating (@vnr.NumberOfRatings)</p>
+            <div class="vn-card-content">
+                @if (vnr.NumberOfRatings > 0)
+                {
+                    @* <p>Рейтинг: @vnr.AverageRating (@vnr.NumberOfRatings)</p> *@
 
-            }
-            @if (@vnr.VisualNovel.VndbRating != null && vnr.VisualNovel.VndbVoteCount != null)
-            {
-                <p>Рейтинг VNDB: @vnr.VisualNovel.VndbRating (@vnr.VisualNovel.VndbVoteCount)</p>
-            }
-            <a class="btn btn-primary" role="button" asp-controller="Novel" asp-action="Novel" asp-route-id="@vnr.VisualNovel.Id" asp-route-spoilerLevel="0">Подробнее</a>
+                }
+                @if (@vnr.VisualNovel.VndbRating != null && vnr.VisualNovel.VndbVoteCount != null)
+                {
+                    <p class="vn-card-rating">★ @vnr.VisualNovel.VndbRating</p>
+                    @* <p>Рейтинг VNDB: @vnr.VisualNovel.VndbRating (@vnr.VisualNovel.VndbVoteCount)</p> *@
+                }
+                @if (@vnr.VisualNovel.Title.Length > 44) {
+                    string shortedTitle = @vnr.VisualNovel.Title.Substring(0, 40) + "...";
+                    <a asp-controller="Novel" asp-action="Novel" asp-route-linkName="@vnr.VisualNovel.LinkName" title="@vnr.VisualNovel.Title"><p class="vn-card-title">@shortedTitle</p></a>
+                }
+                else
+                {
+                    <a asp-controller="Novel" asp-action="Novel" asp-route-linkName="@vnr.VisualNovel.LinkName" title="@vnr.VisualNovel.Title"><p class="vn-card-title">@vnr.VisualNovel.Title</p></a>
+                }
+            </div>
+            @*<a class="btn btn-primary" role="button" asp-controller="Novel" asp-action="Novel" asp-route-id="@vnr.VisualNovel.Id" asp-route-spoilerLevel="0">Подробнее</a>*@
         </div>
     </div>
 }
 
-@if (@result.TotalPages > 1)
-{
-    <nav aria-label="Page navigation example">
-        <ul class="pagination justify-content-center">
-            @if (result.CurrentPage > 3)
-            {
-                <li class="page-item">
-                    <a class="page-link" href="#" aria-label="Previous">
-                        <span aria-hidden="true">&laquo;</span>
-                    </a>
-                </li>
-                <li class="page-item"><a id="pagination" class="page-link" href="#">1</a></li>
-                <li class="page-item"><a class="page-link" href="#">...</a></li>
-            }
-            @for (int i = result.CurrentPage - 2; i <= result.CurrentPage; i++)
-            {
-                if (i > 0 && i != result.CurrentPage)
-                {
-                    <li class="page-item"><a id="pagination" class="page-link" href="#">@i</a></li>
-                }
-            }
-            <li class="page-item active"><a class="page-link" href="#">@result.CurrentPage</a></li>
-            @for (int i = result.CurrentPage; i <= result.CurrentPage + 2; i++)
-            {
-                if (i <= result.TotalPages && i != result.CurrentPage)
-                {
-                    <li class="page-item"><a id="pagination" class="page-link" href="#">@i</a></li>
-                }
-            }
-            @if (result.CurrentPage <= result.TotalPages - 3)
-            {
-                <li class="page-item"><a class="page-link" href="#">...</a></li>
-                <li class="page-item"><a id="pagination" class="page-link" href="#">@result.TotalPages</a></li>
-                <li class="page-item">
-                    <a class="page-link" href="#" aria-label="Next">
-                        <span aria-hidden="true">&raquo;</span>
-                    </a>
-                </li>
-            }
-        </ul>
-    </nav>
-}
-
+@await Html.PartialAsync("_VisualNovelPaginationPartial")

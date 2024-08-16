@@ -1,0 +1,76 @@
+﻿@using Microsoft.AspNetCore.Identity;
+@using NovelSite.Data.Identity;
+@using NovelSite.Services.Queries;
+@using NovelSite.Models.Comment;
+@model List<VisualNovelCommentViewModel>
+@inject SignInManager<ApplicationIdentityUser> SignInManager;
+@inject UserManager<ApplicationIdentityUser> UserManager;
+@{
+    int visualNovelId = ViewBag.VisualNovelId;
+
+    int count = 0;
+
+    void CommentsCount(ICollection<VisualNovelCommentViewModel> comments)
+    {
+        count += comments.Where(c => c.IsDeleted == false).Count();
+
+        foreach (var item in comments)
+        {
+            if (item.Replies.Count > 0)
+            {
+                CommentsCount(item.Replies);
+            }
+        }
+    }
+
+    if (Model != null)
+    {
+        CommentsCount(Model);
+    }
+
+    ApplicationIdentityUser currentUser = null;
+
+    if (SignInManager.IsSignedIn(User))
+    {
+        currentUser = await UserManager.GetUserAsync(User);
+    }
+}
+<div class="p-2">
+    <h2 class="p-2">Комментарии (<span id="comments-count">@count</span>)</h2>
+
+    @if (currentUser != null)
+    {
+        <div class="" id="addFormConainer">
+            <form id="addForm" class="comment-form" method="post" onsubmit="event.preventDefault(); submitAddComment();">
+                <input type="hidden" name="UserId" value="@currentUser.Id" />
+                <input type="hidden" name="ParentCommentId" value="@null" />
+                <input type="hidden" name="VisualNovelId" value="@visualNovelId" />
+@*                 <div class="format-buttons">
+                    <button type="button" onclick="formatText('bold', 'newComment')">Bold</button>
+                    <button type="button" onclick="formatText('italic', 'newComment')">Italic</button>
+                    <button type="button" onclick="formatText('underline', 'newComment')">Underline</button>
+                    <button type="button" onclick="formatText('spoiler', 'newComment')">Spoiler</button>
+                </div> TODO *@
+                <div>
+                    <textarea id="commentText-newComment" name="Content" class="form-control" rows="2" placeholder="Текст комментария..."></textarea>
+                </div>
+                <div class="my-2">
+                    <button type="submit" class="btn btn-primary">Отправить</button>
+                </div>
+            </form>
+        </div>
+    }
+    else
+    {
+        <div>
+            <p class="p-2">Чтобы оставить комментарий или оценить другой, необходимо <a asp-area="Identity" asp-page="/Account/Login">авторизоваться</a></p>
+        </div>
+    }
+
+    <div id="comment-container">
+        @if (Model != null)
+        {
+            @await Html.PartialAsync("_CommentPartial")
+        }
+    </div>
+</div>

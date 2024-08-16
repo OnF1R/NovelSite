@@ -1,0 +1,25 @@
+﻿@using NovelSite.Models.Novel;
+@model List<VisualNovelList>
+<div>
+    @foreach (VisualNovelList list in Model)
+    {
+        <div id="row-edit-novels-list-@list.Id" class="row mb-2">
+            <div class="col">
+                <p id="list-name-@list.Id" class="text-break">«@list.Name»</p>
+            </div>
+            <div class="col">
+                <div class="row text-center">
+                    <div class="col mb-2">
+                        <button class="btn btn-primary" data-list-name="@list.Name" data-list-id="@list.Id" data-list-is-private="@list.IsPrivate.ToString().ToLower()" data-list-is-custom="@list.IsCustom.ToString().ToLower()" data-bs-toggle="modal" data-bs-target="#editVisualNovelList" onclick="event.preventDefault(); editVisualNovelListModal(this)">Редактировать</button>
+                    </div>
+                    @if (list.IsCustom)
+                    {
+                        <div class="col">
+                            <button class="btn btn-danger" data-list-id="@list.Id" onclick="event.preventDefault(); deleteVisualNovelList(this)">Удалить</button>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    }
+</div>

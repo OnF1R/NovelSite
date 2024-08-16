@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using NovelSite.Models.Novel;
 
 namespace NovelSite.Models
 {
@@ -11,33 +12,20 @@ namespace NovelSite.Models
 
     public enum DeveloperType
     {
-        Company,
-        Individual,
-        AmateurGroup,
-        Undefined
+        Co,
+        In,
+        Ng,
     }
 
     public class VNDBDeveloper
     {
-        public VNDBDeveloper()
-        {
-            DeveloperType = Type switch
-            {
-                "co" => DeveloperType.Company,
-                "in" => DeveloperType.Individual,
-                "ng" => DeveloperType.AmateurGroup,
-                _ => DeveloperType.Undefined,
-            };
-        }
-
         public string? Id { get; set; }
         public string? Name { get; set; }
         public string? Original { get; set; }
         public List<string>? Aliases { get; set; }
         [JsonProperty("lang")]
         public string? Language { get; set; }
-        public string? Type { get; set; }
-        public DeveloperType DeveloperType { get; set; }
+        public DeveloperType Type { get; set; }
         public string? Description { get; set; }
     }
 
@@ -55,22 +43,13 @@ namespace NovelSite.Models
 
     public class VNDBImage
     {
-        public VNDBImage()
-        {
-            if (Dims != null)
-            {
-                Width = Dims[0];
-                Height = Dims[1];
-            }
-        }
-
         public string? Id { get; set; }
         public string? Url { get; set; }
         public int[]? Dims { get; set; }
         public int? Width { get; set; }
         public int? Height { get; set; }
-        public short? Sexual { get; set; }
-        public short? Violence { get; set; }
+        public double? Sexual { get; set; }
+        public double? Violence { get; set; }
         public int? VoteCount { get; set; }
     }
 
@@ -107,7 +86,7 @@ namespace NovelSite.Models
         public string? Olang { get; set; }
         public DevelopmentStatus? Devstatus { get; set; }
         public string? Released { get; set; }
-        public List<VNDBImage>? Image { get; set; }
+        public VNDBImage? Image { get; set; }
         public int? Length { get; set; }
         [JsonProperty("length_minutes")]
         public int? LengthInMinutes { get; set; }

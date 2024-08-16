@@ -1,0 +1,50 @@
+﻿@using NovelSite.Models.Novel;
+
+@{
+    VisualNovelWithRatingResult result = ViewBag.Vns;
+    List<VisualNovelWithRating> vns = result.Result;
+}
+
+@if (@result.TotalPages > 1)
+{
+    <nav aria-label="Page navigation example" name="page-pagination" id="page-navigation">
+        <ul class="pagination justify-content-center">
+            @if (result.CurrentPage > 3)
+            {
+                <li class="page-item">
+                    <a class="page-link" aria-label="Previous">
+                        <span aria-hidden="true">&laquo;</span>
+                    </a>
+                </li>
+                <li class="page-item"><a id="pagination-1" class="page-link" onclick="changePage(1);">1</a></li>
+                <li class="page-item"><a class="page-link">...</a></li>
+            }
+            @for (int i = result.CurrentPage - 2; i <= result.CurrentPage; i++)
+            {
+                if (i > 0 && i != result.CurrentPage)
+                {
+                    <li class="page-item"><a id="pagination" class="page-link" onclick="changePage(@i);">@i</a></li>
+                }
+            }
+            <li class="page-item active"><a class="page-link">@result.CurrentPage</a></li>
+            @for (int i = result.CurrentPage; i <= result.CurrentPage + 2; i++)
+            {
+                if (i <= result.TotalPages && i != result.CurrentPage)
+                {
+                    <li class="page-item"><a id="pagination-@i" class="page-link" onclick="changePage(@i);">@i</a></li>
+                }
+            }
+            @if (result.CurrentPage <= result.TotalPages - 3)
+            {
+                <li class="page-item"><a class="page-link">...</a></li>
+                <li class="page-item"><a id="pagination-@result.TotalPages" class="page-link" onclick="changePage(@result.TotalPages)">@result.TotalPages</a></li>
+                <li class="page-item">
+                    <a class="page-link" href="" aria-label="Next">
+                        <span aria-hidden="true">&raquo;</span>
+                    </a>
+                </li>
+            }
+        </ul>
+    </nav>
+}
+

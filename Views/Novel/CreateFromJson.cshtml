@@ -1,0 +1,269 @@
+﻿@using Microsoft.AspNetCore.Identity;
+@using NovelSite.Models.Identity;
+@using NovelSite.Data.Identity;
+@using NovelSite.Models.Novel;
+
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+@inject SignInManager<ApplicationIdentityUser> SignInManager;
+@inject UserManager<ApplicationIdentityUser> UserManager;
+
+@{
+    ViewData["Title"] = "Добавить визуальную новеллу из JSON";
+
+    ApplicationIdentityUser currentUser = null;
+
+    if (SignInManager.IsSignedIn(User))
+    {
+        currentUser = await UserManager.GetUserAsync(User);
+    }
+}
+
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+<div class="text-center">
+    <h1 class="display-4">Добавить визуальную новеллу</h1>
+</div>
+
+
+<img id="previewBackgroundImage" class="bg-top" src="#" alt="" hidden>
+
+@* @await Html.PartialAsync("_AddAuthorModalPartial") *@
+
+@if (currentUser == null)
+{
+    return;
+}
+
+<div class="text-center">
+
+    @model VisualNovelFromJsonRequest
+    <form id="visualNovelAddFromJsonForm" method="post" asp-action="CreateFromJson" enctype="multipart/form-data">
+        <div class="mb-3">
+            <label asp-for="LinkName" for="visualNovelLinkName" class="form-label">Название ссылки на визуальную новеллу</label>
+            <br />
+            <span asp-validation-for="LinkName" class="text-danger"></span>
+            <input id="visualNovelLinkName" asp-for="LinkName" type="text" name="LinkName" class="form-control">
+            <div id="visualNovelLinkNameHelp" class="form-text">
+                Например: для визуальной новеллы с названием - "Saya No Uta", название ссылки должно выглядеть примерно так - "saya-no-uta".
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <label id="visualNovelSoundtrackYoutubePlaylistLinkLabel" class="form-label" for="visualNovelSoundtrackYoutubePlaylistLink">Ссылка на YouTube плейлист с саундтреков визуальной новеллы</label>
+            <input id="visualNovelSoundtrackYoutubePlaylistLink" asp-for="SoundtrackYoutubePlaylistLink" name="SoundtrackYoutubePlaylistLink" class="form-control">
+            <div id="visualNovelTranslateLinkForSteamHelp" class="form-text">
+                Если нет, оставлять пустым.
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <label id="visualNovelJsonLabel" class="form-label" for="visualNovelJson">JSON Визуальной новеллы</label>
+            <input id="visualNovelJson" asp-for="VisualNovelJson" name="VisualNovelJson" class="form-control">
+        </div>
+
+        <div class="mb-3">
+            <label id="visualNovelCoverImageLabel" for="visualNovelCoverImage" class="form-label">Обложка визуальной новеллы</label>
+            <br />
+            <span asp-validation-for="CoverImage" class="text-danger"></span>
+            <input id="visualNovelCoverImage" asp-for="CoverImage" type="file" name="CoverImage" accept="image/png, image/jpeg" class="form-control" aria-describedby="coverImageHelp" required>
+            <div id="coverImageHelp" class="form-text">
+                Ваше изображение должно быть подходящего формата (jpeg, png, bmp или gif) и иметь размер не превышающий 3МБ.
+            </div>
+            <img id="previewCoverImage" class="img-preview img-fluid" src="#" alt="" height="auto" width="25%" hidden>
+        </div>
+
+        <div class="mb-3">
+            <label for="visualNovelBackgroundImage" class="form-label">Фон страницы визуальной новеллы</label>
+            <br />
+            <span asp-validation-for="BackgroundImage" class="text-danger"></span>
+            <input id="visualNovelBackgroundImage" asp-for="BackgroundImage" type="file" name="BackgroundImage" accept="image/png, image/jpeg" class="form-control" aria-describedby="coverImageHelp">
+            <div id="backgroundImageHelp" class="form-text">
+                Ваше изображение должно быть подходящего формата (jpeg, png, bmp или gif) и иметь размер не превышающий 3МБ.
+            </div>
+            <div class="form-check form-switch d-flex justify-content-center">
+                <input class="form-check-input mx-3" type="checkbox" id="backgroundPreviewCheck">
+                <label class="form-check-label" for="backgroundPreviewCheck">Предпросмотр фонового изображения</label>
+            </div>
+        </div>
+        <div class="mb-3">
+            <input asp-for="Screenshots"
+                   type="file"
+                   id="image-input"
+                   name="Screenshots"
+                   accept="image/jpeg"
+                   hidden
+                   multiple />
+
+            <label for="image-input" class="form-label">Скриншоты визуальной новеллы</label>
+            <br />
+            @*          <span asp-validation-for="Screenshots" class="text-danger"></span>
+            <input id="visualNovelScreenshots" asp-for="Screenshots" type="file" name="Screenshots" accept="image/png, image/jpeg" class="form-control" aria-describedby="coverImageHelp" multiple>
+            *@
+            <div class="custom__image-container">
+                <label class="p-relative" id="add-img-label" for="add-single-img">+</label>
+                <input type="file" id="add-single-img" accept="image/jpeg" multiple hidden />
+            </div>
+
+            <div id="screenshotsHelp" class="form-text">
+                Ваши изображения должны быть подходящего формата (jpeg, png, bmp или gif) и иметь размер не превышающий 3МБ.
+            </div>
+            @* <img id="previewCoverImage" class="img-fluid" src="#" alt="" height="auto" width="25%" hidden> *@
+        </div>
+
+        <button type="submit" class="btn btn-primary mb-3">Добавить визуальную новеллу</button>
+    </form>
+</div>
+
+<script>
+    window.addEventListener('load', function () {
+        document.querySelector('input[name="CoverImage"]').addEventListener('change', function () {
+            if (this.files && this.files[0]) {
+                var img = document.getElementById('previewCoverImage');
+                img.onload = () => {
+                    URL.revokeObjectURL(img.src);  // no longer needed, free memory
+                }
+
+                img.src = URL.createObjectURL(this.files[0]); // set src to blob url
+                img.hidden = false;
+            }
+        });
+
+        document.getElementById('backgroundPreviewCheck').addEventListener('change', function () {
+            if (this.checked) {
+                var img = document.getElementById('previewBackgroundImage');
+                img.hidden = false;
+            } else {
+                var img = document.getElementById('previewBackgroundImage');
+                img.hidden = true;
+            }
+        });
+
+        document.querySelector('input[name="BackgroundImage"]').addEventListener('change', function () {
+            if (this.files && this.files[0]) {
+                var img = document.getElementById('previewBackgroundImage');
+                img.onload = () => {
+                    URL.revokeObjectURL(img.src);  // no longer needed, free memory
+                }
+
+                img.src = URL.createObjectURL(this.files[0]); // set src to blob url
+            }
+        });
+    });
+
+</script>
+
+<script>
+    const imgInputHelper = document.getElementById("add-single-img");
+    const imgInputHelperLabel = document.getElementById("add-img-label");
+    const imgContainer = document.querySelector(".custom__image-container");
+    let imgFiles = [];
+
+    const addImageHandler = async () => {
+        const files = imgInputHelper.files;
+        if (!files) return;
+
+        for (let i = 0; i < files.length; i++) {
+            await addImage(files[i]);
+        }
+        imgInputHelper.value = "";
+    };
+
+    const addImage = (file) => {
+        return new Promise((resolve) => {
+            const fileIndex = imgFiles.length;
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => {
+                const imgWrapper = document.createElement("div");
+                imgWrapper.className = "img-wrapper";
+                imgWrapper.setAttribute('data-index', fileIndex);
+
+                const newImg = document.createElement("img");
+                newImg.src = reader.result;
+                imgWrapper.appendChild(newImg);
+
+                const deleteBtn = document.createElement("button");
+                deleteBtn.className = "delete-btn";
+                deleteBtn.innerHTML = "X";
+                deleteBtn.addEventListener("click", () => {
+                    const index = parseInt(imgWrapper.getAttribute('data-index'));
+                    imgFiles.splice(index, 1);
+                    imgContainer.removeChild(imgWrapper);
+                    updateImagePositions();
+                });
+                imgWrapper.appendChild(deleteBtn);
+
+                const moveUpBtn = document.createElement("a");
+                moveUpBtn.setAttribute("role", "button");
+                moveUpBtn.className = "move-up-btn";
+                moveUpBtn.innerHTML = "←";
+                moveUpBtn.addEventListener("click", () => {
+                    const index = parseInt(imgWrapper.getAttribute('data-index'));
+                    if (index > 0) {
+                        [imgFiles[index], imgFiles[index - 1]] = [imgFiles[index - 1], imgFiles[index]];
+                        imgContainer.insertBefore(imgWrapper, imgContainer.children[index - 1]);
+                        updateImagePositions();
+                    }
+                });
+                imgWrapper.appendChild(moveUpBtn);
+
+                const moveDownBtn = document.createElement("a");
+                moveDownBtn.setAttribute("role", "button");
+                moveDownBtn.className = "move-down-btn";
+                moveDownBtn.innerHTML = "→";
+                moveDownBtn.addEventListener("click", () => {
+                    const index = parseInt(imgWrapper.getAttribute('data-index'));
+                    if (index < imgFiles.length - 1) {
+                        [imgFiles[index], imgFiles[index + 1]] = [imgFiles[index + 1], imgFiles[index]];
+                        imgContainer.insertBefore(imgWrapper, imgContainer.children[index + 2]);
+                        updateImagePositions();
+                    }
+                });
+
+                imgWrapper.appendChild(moveDownBtn);
+
+                imgContainer.insertBefore(imgWrapper, imgInputHelperLabel);
+
+                imgFiles.push(file);
+                updateImagePositions();
+                resolve();
+            };
+        });
+    };
+
+    imgInputHelper.addEventListener("change", addImageHandler);
+
+    const getImgFileList = () => {
+        const imgFilesHelper = new DataTransfer();
+        imgFiles.forEach((imgFile) => {
+            if (imgFile instanceof File) {
+                imgFilesHelper.items.add(imgFile);
+            }
+        });
+        return imgFilesHelper.files;
+    };
+
+    document.querySelector("#visualNovelAddFromJsonForm").addEventListener("submit", function () {
+        const firstImgInput = document.getElementById("image-input");
+        firstImgInput.files = getImgFileList();
+        console.log("executed");
+    });
+
+    const updateImagePositions = () => {
+        const imgWrappers = document.querySelectorAll('.img-wrapper');
+        imgWrappers.forEach((wrapper, index) => {
+            const upBtn = wrapper.querySelector('.move-up-btn');
+            const downBtn = wrapper.querySelector('.move-down-btn');
+
+            wrapper.setAttribute('data-index', index);
+            upBtn.style.display = index === 0 ? 'none' : 'block';
+            downBtn.style.display = index === imgWrappers.length - 1 ? 'none' : 'block';
+        });
+    };
+</script>
+
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
