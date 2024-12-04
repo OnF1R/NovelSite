@@ -54,6 +54,8 @@ function searchFormHandler() {
 //Затычка для отсутствия ошибок в консоли
 function trackVisitor(visualNovelId) {}
 
+
+
 function loadTagsMetadata(visualNovelId, spoilerLevel) {
     var alert = document.getElementById("liveAlertPlaceholder");
 
@@ -947,6 +949,8 @@ function changePage(page, filters, pushToHistory = true) {
         // }
 
         let itemsPerPage = 20;
+
+        //window.scrollTo(0, 0);
 
         updateContent(tags, genres, languages, platforms, spoilerLevel, readingTime, sort, search, page, itemsPerPage);
     }

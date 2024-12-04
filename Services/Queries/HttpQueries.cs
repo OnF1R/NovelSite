@@ -50,6 +50,25 @@ namespace NovelSite.Services.Queries
         }
 
         [HttpGet]
+        public static async Task<List<VisualNovel>> GetVisualNovelRecommendation(int id)
+        {
+            string vnData = @"";
+            HttpClient client = new HttpClient();
+            HttpResponseMessage response = await client.GetAsync(Globals.API_URL + $"VisualNovelRecommendation?id={id}");
+            HttpContent content = response.Content;
+            if (response.IsSuccessStatusCode)
+            {
+                vnData = await response.Content.ReadAsStringAsync();
+            }
+            else
+            {
+                return null;
+            }
+
+            return JsonConvert.DeserializeObject<VisualNovel[]>(vnData).ToList();
+        }
+
+        [HttpGet]
         public static async Task<List<VisualNovelWithRating>> GetVisualNovelsWithRatings()
         {
             string vnData = @"";

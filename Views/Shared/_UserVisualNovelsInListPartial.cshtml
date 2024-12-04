@@ -1,32 +1,50 @@
 ﻿@using NovelSite.Models.Novel;
 @model List<VisualNovelListEntry>
 
- @{
+@{
     @* List<VisualNovelListEntry> vnInList = ViewBag.VisualNovelsInList; *@
     string s3Url = $"https://2f58d602-2c33-481e-875b-700b4d4b3263.selstorage.ru/";
 }
-
-<div class="row">
-    @if (Model != null && Model.Count() > 0)
-    {
-        @foreach (var vnEntry in Model)
+<div class="text-center">
+    <div class="row g-2 d-flex justify-content-center flex-wrap">
+        @if (Model != null && Model.Count() > 0)
         {
-            <div class="col-xxl-4 col-xl-4 col-lg-4 col-md-4 col-sm-6">
-                @{ string coverImageUrl = $"{@s3Url}{vnEntry.VisualNovel.CoverImageLink}"; }
 
-                <div class="position-relative">
-                    <a asp-controller="Novel" asp-action="Novel" asp-route-linkName="@vnEntry.VisualNovel.LinkName">
-                        <img loading="lazy" src="@coverImageUrl" class="w-100" />
-                    </a>
-                    <a asp-controller="Novel" asp-action="Novel" asp-route-linkName="@vnEntry.VisualNovel.LinkName">@vnEntry.VisualNovel.Title</a>
+            @foreach (var vnEntry in Model)
+            {
+                <div class="vn-card position-relative vn-card-filtred mt-3 col-md-3 col-lg-3 col-6">
+                    <div class="box">
+                        @if (vnEntry.VisualNovel.CoverImageLink != null)
+                        {
+                            string coverImageUrl = $"https://2f58d602-2c33-481e-875b-700b4d4b3263.selstorage.ru/" +
+                            $"{vnEntry.VisualNovel.CoverImageLink}";
+                            <a asp-controller="Novel" asp-action="Novel" asp-route-linkName="@vnEntry.VisualNovel.LinkName" title="@vnEntry.VisualNovel.Title"><img loading="lazy" src="@coverImageUrl" class="home_cover_image" /></a>
+                        }
+                        else
+                        {
+                            <img loading="lazy" src="~/images/thumbnail.png" class="home_cover_image">
+                        }
+                        <div class="vn-card-content">
+                            @if (vnEntry.VisualNovel.Title.Length > 44)
+                            {
+                                string shortedTitle = vnEntry.VisualNovel.Title.Substring(0, 40) + "...";
+                                <a asp-controller="Novel" asp-action="Novel" asp-route-linkName="@vnEntry.VisualNovel.LinkName" title="@vnEntry.VisualNovel.Title"><p class="vn-card-title">@shortedTitle</p></a>
+                            }
+                            else
+                            {
+                                <a asp-controller="Novel" asp-action="Novel" asp-route-linkName="@vnEntry.VisualNovel.LinkName" title="@vnEntry.VisualNovel.Title"><p class="vn-card-title">@vnEntry.VisualNovel.Title</p></a>
+                            }
+                        </div>
+                        @*<a class="btn btn-primary" role="button" asp-controller="Novel" asp-action="Novel" asp-route-id="@vnr.VisualNovel.Id" asp-route-spoilerLevel="0">Подробнее</a>*@
+                    </div>
                 </div>
+            }
+        }
+        else
+        {
+            <div class="col-xxl-12 col-xl-12 col-lg-12 col-md-12 col-sm-12 d-flex">
+                <p class="justify-content-center">Список пуст :(</p>
             </div>
         }
-    }
-    else
-    {
-        <div class="col-xxl-12 col-xl-12 col-lg-12 col-md-12 col-sm-12 d-flex">
-            <p class="justify-content-center">Список пуст :(</p>
-        </div>
-    }
+    </div>
 </div>

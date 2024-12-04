@@ -313,6 +313,8 @@
 
         var alert = document.getElementById("liveAlertPlaceholder");
 
+        document.getElementById("visualNovelContentContainer").innerHTML = "";
+
         alert.innerHTML = `<div class="spinner-border my-2" role = "status"><span class="visually-hidden">Loading...</span></div>`
 
         var url = "/Home/VisualNovelContent?";

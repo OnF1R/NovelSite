@@ -20,7 +20,7 @@
     string fancyCarouselThumbsScript = "https://cdn.jsdelivr.net/npm/@fancyapps/ui@5.0/dist/carousel/carousel.thumbs.umd.js";
 
     <script src="@fancyCarouselThumbsScript"></script>
-    <script src= "@fancyCarouselScript"></script >
+    <script src="@fancyCarouselScript"></script>
 
     string s3Url = $"https://2f58d602-2c33-481e-875b-700b4d4b3263.selstorage.ru/";
     string backgroundImageUrl = @s3Url + vn.BackgroundImageLink;
@@ -49,10 +49,6 @@
         metaDescription.Append($" или другие названия {string.Join(',', vn.AnotherTitles)},");
         metaKeywords.Append($",{string.Join(',', vn.AnotherTitles)}");
     }
-
-
-
-    
 
     if (vn.Genres != null)
     {
@@ -101,7 +97,7 @@
                 @if (currentUser != null)
                 {
                     <div class="mt-3">
-                        
+
                         @if (currentUser.Id == vn.AdddeUserId.ToString())
                         {
                             <a class="btn btn-primary" asp-controller="Novel" asp-action="Edit" asp-route-linkName="@vn.LinkName">Редактировать</a>
@@ -114,21 +110,21 @@
                         }
 
                         @* <div class="mt-3">
-                            <span><b>Мои списки:</b></span>
-                            <select id="UserVisualNovelLists" name="UserVisualNovelLists" class="form-select js-example-basic-multiple user-visual-novel-lists-selector" multiple required aria-label="Visual novel author select">
-                                @foreach (var list in userLists)
-                                {
-                                    if (userListEntry.Any(entry => entry.VisualNovelList.Id == list.Id))
-                                    {
-                                        <option selected value="@list.Id">@list.Name</option>
-                                    }
-                                    else
-                                    {
-                                        <option value="@list.Id">@list.Name</option>
-                                    }
-                                }
-                            </select>
-                        </div> *@
+                    <span><b>Мои списки:</b></span>
+                    <select id="UserVisualNovelLists" name="UserVisualNovelLists" class="form-select js-example-basic-multiple user-visual-novel-lists-selector" multiple required aria-label="Visual novel author select">
+                    @foreach (var list in userLists)
+                    {
+                    if (userListEntry.Any(entry => entry.VisualNovelList.Id == list.Id))
+                    {
+                    <option selected value="@list.Id">@list.Name</option>
+                    }
+                    else
+                    {
+                    <option value="@list.Id">@list.Name</option>
+                    }
+                    }
+                    </select>
+                    </div> *@
 
 
 
@@ -151,7 +147,7 @@
                                             <label>
                                                 <input type="checkbox" value="@list.Id" data-mutually-exclusive="@(list.ListType == null ? "" : @list.ListType.IsMutuallyExclusive.ToString().ToLower())"> @list.Name
                                             </label>
-                                        } 
+                                        }
                                     }
                                 </div>
                             </div>
@@ -320,18 +316,20 @@
                         @for (int i = 0; i < vn.Author.Count; i++)
                         {
                             @* @if (vn.Author[i].Source != null)
-                            {
-                                <a target="_blank" href="@vn.Author[i].Source">@vn.Author[i].Name</a>
-                            }
-                            else
-                            {
-                                <span>@vn.Author[i].Name</span>
-                            } *@
+                    {
+                    <a target="_blank" href="@vn.Author[i].Source">@vn.Author[i].Name</a>
+                    }
+                    else
+                    {
+                    <span>@vn.Author[i].Name</span>
+                    } *@
                             if (vn.Author[i].VndbId != null)
                             {
                                 if (i < vn.Author.Count - 1)
                                 {
-                                    <a target="_blank" href="https://vndb.org/@vn.Author[i].VndbId">@vn.Author[i].Name</a><span>, </span>
+                                    <a target="_blank" href="https://vndb.org/@vn.Author[i].VndbId">@vn.Author[i].Name</a>
+
+                                    <span>, </span>
                                 }
                                 else
                                 {
@@ -359,13 +357,13 @@
                         <p>
                             <b>Автор: </b>
                             @* @if (vn.Author[0].Source != null)
-                            {
-                                <span><a target="_blank" href="@vn.Author[0].Source">@vn.Author[0].Name</a></span>
-                            }
-                            else
-                            {
-                                <span>@vn.Author[0].Name</span>
-                            } *@
+                    {
+                    <span><a target="_blank" href="@vn.Author[0].Source">@vn.Author[0].Name</a></span>
+                    }
+                    else
+                    {
+                    <span>@vn.Author[0].Name</span>
+                    } *@
 
                             @if (vn.Author[0].VndbId != null)
                             {
@@ -389,9 +387,11 @@
                             {
                                 if (i < vn.Translator.Count - 1)
                                 {
-                                    <a target="_blank" href="@vn.Translator[i].Source">@vn.Translator[i].Name</a><span>,</span>
+                                    <a target="_blank" href="@vn.Translator[i].Source">@vn.Translator[i].Name</a>
+
+                                    <span>,</span>
                                 }
-                                else 
+                                else
                                 {
                                     <a target="_blank" href="@vn.Translator[i].Source">@vn.Translator[i].Name</a>
                                 }
@@ -401,7 +401,9 @@
                             {
                                 if (i < vn.Translator.Count - 1)
                                 {
-                                    <span>@vn.Translator[i].Name</span><span>,</span>
+                                    <span>@vn.Translator[i].Name</span>
+
+                                    <span>,</span>
                                 }
                                 else
                                 {
@@ -462,11 +464,13 @@
                         {
                             if (i < vn.Languages.Count - 1)
                             {
-                                            <a asp-controller="Novel" asp-action="Novels" asp-route-languages="@vn.Languages[i].Id">@vn.Languages[i].Name</a><span>,</span>
+                                <a asp-controller="Novel" asp-action="Novels" asp-route-languages="@vn.Languages[i].Id">@vn.Languages[i].Name</a>
+
+                                <span>,</span>
                             }
                             else
                             {
-                                            <a asp-controller="Novel" asp-action="Novels" asp-route-languages="@vn.Languages[i].Id">@vn.Languages[i].Name</a>
+                                <a asp-controller="Novel" asp-action="Novels" asp-route-languages="@vn.Languages[i].Id">@vn.Languages[i].Name</a>
                             }
                         }
                     }
@@ -478,11 +482,13 @@
                         {
                             if (i < vn.Platforms.Count - 1)
                             {
-                                            <a asp-controller="Novel" asp-action="Novels" asp-route-platforms="@vn.Platforms[i].Id">@vn.Platforms[i].Name</a><span>,</span>
+                                <a asp-controller="Novel" asp-action="Novels" asp-route-platforms="@vn.Platforms[i].Id">@vn.Platforms[i].Name</a>
+
+                                <span>,</span>
                             }
                             else
                             {
-                                            <a asp-controller="Novel" asp-action="Novels" asp-route-platforms="@vn.Platforms[i].Id">@vn.Platforms[i].Name</a>
+                                <a asp-controller="Novel" asp-action="Novels" asp-route-platforms="@vn.Platforms[i].Id">@vn.Platforms[i].Name</a>
                             }
                         }
                     }
@@ -494,11 +500,13 @@
                         {
                             if (i < vn.Genres.Count - 1)
                             {
-                                            <a asp-controller="Novel" asp-action="Novels" asp-route-genres="@vn.Genres[i].Id">@vn.Genres[i].Name</a><span>,</span>
+                                <a asp-controller="Novel" asp-action="Novels" asp-route-genres="@vn.Genres[i].Id">@vn.Genres[i].Name</a>
+
+                                <span>,</span>
                             }
                             else
                             {
-                                            <a asp-controller="Novel" asp-action="Novels" asp-route-genres="@vn.Genres[i].Id">@vn.Genres[i].Name</a>
+                                <a asp-controller="Novel" asp-action="Novels" asp-route-genres="@vn.Genres[i].Id">@vn.Genres[i].Name</a>
                             }
                         }
                     }
@@ -506,38 +514,44 @@
 
                 @if (vn.RelatedNovels != null && vn.RelatedNovels.Count > 0)
                 {
-                    <p><b>Связанные новеллы</b>:
-                    @for (int i = 0; i < vn.RelatedNovels.Count; i++)
-                    {
+                    <p>
+                        <b>Связанные новеллы</b>:
+                        @for (int i = 0; i < vn.RelatedNovels.Count; i++)
+                        {
                             if (i < vn.RelatedNovels.Count - 1)
-                        {
-                            <a asp-controller="Novel" asp-action="Novel" asp-route-linkName="@vn.RelatedNovels[i].RelatedVisualNovel.LinkName">@vn.RelatedNovels[i].RelatedVisualNovel.Title</a><span>,</span>
+                            {
+                                <a asp-controller="Novel" asp-action="Novel" asp-route-linkName="@vn.RelatedNovels[i].RelatedVisualNovel.LinkName">@vn.RelatedNovels[i].RelatedVisualNovel.Title</a>
+
+                                <span>,</span>
+                            }
+                            else
+                            {
+                                <a asp-controller="Novel" asp-action="Novel" asp-route-linkName="@vn.RelatedNovels[i].RelatedVisualNovel.LinkName">@vn.RelatedNovels[i].RelatedVisualNovel.Title</a>
+                            }
                         }
-                        else
-                        {
-                            <a asp-controller="Novel" asp-action="Novel" asp-route-linkName="@vn.RelatedNovels[i].RelatedVisualNovel.LinkName">@vn.RelatedNovels[i].RelatedVisualNovel.Title</a>
-                        }
-                    }
                     </p>
                 }
 
                 @if (vn.AnimeLinks != null && vn.AnimeLinks.Count > 0)
                 {
-                    <p><b>Связанные аниме</b>:
-                    @{
-                        vn.AnimeLinks.OrderBy(link => link);
-                    }
-                    @for (int i = 0; i < vn.AnimeLinks.Count; i++)
-                    {
-                        if (i < vn.AnimeLinks.Count - 1)
-                        {
-                            <a href="@vn.AnimeLinks[i].Url">@vn.AnimeLinks[i].Name</a><span>,</span>
+                    <p>
+                        <b>Связанные аниме</b>:
+                        @{
+                            vn.AnimeLinks.OrderBy(link => link);
                         }
-                        else
+                        @for (int i = 0; i < vn.AnimeLinks.Count; i++)
                         {
-                            <a href="@vn.AnimeLinks[i].Url">@vn.AnimeLinks[i].Name</a>
+                            if (i < vn.AnimeLinks.Count - 1)
+                            {
+                                <a href="@vn.AnimeLinks[i].Url">@vn.AnimeLinks[i].Name</a>
+
+                                <span>,</span>
+                            }
+                            else
+                            {
+                                <a href="@vn.AnimeLinks[i].Url">@vn.AnimeLinks[i].Name</a>
+                            }
                         }
-                    }
                     </p>
                 }
 
@@ -555,7 +569,7 @@
                             </h2>
                             <div id="collapseDownloadLinks" class="accordion-collapse collapse" data-bs-parent="#accordionDownloadLinks">
                                 <div class="accordion-body">
-                                    @if (vn.DownloadLinks != null) 
+                                    @if (vn.DownloadLinks != null)
                                     {
                                         @foreach (DownloadLink link in vn.DownloadLinks.OrderBy(vn => vn.GamingPlatform.Id))
                                         {
@@ -683,7 +697,7 @@
                 @if (vn.SoundtrackYoutubePlaylistLink != null)
                 {
                     <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="sountrack-tab" data-bs-toggle="tab" data-bs-target="#sountrack-tab-pane" type="button" role="tab" aria-controls="soundtrag-tab-pane" aria-selected="false">Саундтрек</button>
+                        <button class="nav-link" id="sountrack-tab" data-bs-toggle="tab" data-bs-target="#sountrack-tab-pane" type="button" onclick="loadYoutubeSoundtrack('@vn.SoundtrackYoutubePlaylistLink')" role="tab" aria-controls="soundtrag-tab-pane" aria-selected="false">Саундтрек</button>
                     </li>
                 }
             </ul>
@@ -691,22 +705,22 @@
                 <div class="tab-pane fade show active" id="description-tab-pane" role="tabpanel" aria-labelledby="description-tab" tabindex="0">
                     <div>
                         @{
-                            string description = vn.Description.Replace("\r\n","<br>"); // TODO Change on server
+                            string description = vn.Description.Replace("\r\n", "<br>"); // TODO Change on server
                         }
                         <p class="text-start p-3">@Html.Raw(description)</p>
                     </div>
-                        @if (vn.ScreenshotLinks != null)
-                        {
-                            <div class="f-carousel" id="myCarousel">
-                                @foreach (string path in vn.ScreenshotLinks)
-                                {
-                                    string coverImageUrl = @s3Url + path;
-                                    <div data-thumb-src="@coverImageUrl" class="f-carousel__slide">
-                                        <a data-fancybox="gallery" href="@coverImageUrl"><img src="@coverImageUrl" /></a>
-                                    </div>
-                                }
-                            </div>
-                        }
+                    @if (vn.ScreenshotLinks != null)
+                    {
+                        <div class="f-carousel" id="myCarousel">
+                            @foreach (string path in vn.ScreenshotLinks)
+                            {
+                                string coverImageUrl = @s3Url + path;
+                                <div data-thumb-src="@coverImageUrl" class="f-carousel__slide">
+                                    <a data-fancybox="gallery" href="@coverImageUrl"><img src="@coverImageUrl" /></a>
+                                </div>
+                            }
+                        </div>
+                    }
                 </div>
                 <div class="tab-pane fade" id="tags-tab-pane" role="tabpanel" aria-labelledby="tags-tab" tabindex="0">
                     <div id="spoilerLevelSelect" class="mt-2 grid-gap">
@@ -721,16 +735,25 @@
                 @if (vn.SoundtrackYoutubePlaylistLink != null)
                 {
                     <div class="tab-pane fade" id="sountrack-tab-pane" role="tabpanel" aria-labelledby="sountrack-tab" tabindex="0">
-                        <div>
-                            @await Html.PartialAsync("_YoutubeIFramePartial", vn.SoundtrackYoutubePlaylistLink)
+                        <div id="youtube-playlist-container">
+                            @* @await Html.PartialAsync("_YoutubeIFramePartial", vn.SoundtrackYoutubePlaylistLink) *@
                         </div>
                     </div>
                 }
             </div>
         </div>
-        
+
     </div>
 </div>
+
+<div class="text-center">
+    <h1 class="text-start mt-4">Похожие новеллы</h1>
+
+    <div id="recommendation-section">
+        @await Html.PartialAsync("_RecommendedVisualNovelsPartial")
+    </div>
+</div>
+
 
 <div class="vn-page mt-3" style="background: rgba(30,30,30, 0.8)" id="comment-section">
 </div>
@@ -751,7 +774,34 @@
         };
         xhr.send();
     });
+
+    // document.addEventListener("DOMContentLoaded", function () {
+    //     var url = "/Novel/Recommendation?visualNovelId=" + '@vn.Id';
+    //     var xhr = new XMLHttpRequest();
+    //     xhr.open("GET", url, true); 
+    //     xhr.onreadystatechange = function () {
+    //         if (xhr.readyState === 4) {
+    //             if (xhr.status === 200) {
+    //                 document.getElementById('recommendation-section').innerHTML = xhr.responseText;
+    //             }
+    //         }
+    //     };
+    //     xhr.send();
+    // });
+
+    
 </script>
+
+@if (vn.SoundtrackYoutubePlaylistLink != null)
+{
+    <script>
+        function loadYoutubeSoundtrack(soundtrackYoutubePlaylistLink) {
+            var youtubeContainer = document.getElementById("youtube-playlist-container");
+            var content = `@await Html.PartialAsync("_YoutubeIFramePartial", @vn.SoundtrackYoutubePlaylistLink)`;
+            youtubeContainer.innerHTML = content;
+        }
+    </script>
+}
 
 @if (currentUser != null)
 {
@@ -763,7 +813,7 @@
 
         var ratingRadioButtons = document.getElementsByClassName('rating-area')[0].querySelectorAll('input');
         var isHaveRating = @isHaveRating.ToString().ToLower()
-        var deleteRatingButton = document.getElementById('delete-rating-button');
+                var deleteRatingButton = document.getElementById('delete-rating-button');
 
         if (deleteRatingButton) {
             deleteRatingButton.addEventListener('click', function () {

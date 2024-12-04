@@ -1,0 +1,248 @@
+﻿@using NovelSite.Models.Novel;
+
+@{
+    List<VisualNovel> recommended = ViewBag.Recommendation;
+}
+
+<div class="d-flex justify-content-center mt-2" id="liveAlertPlaceholder"></div>
+
+<div class="row g-2 d-flex justify-content-center flex-wrap" id="visualNovelRecommendedContainer">
+    <div class="mb-4 swiper-container swiper-main-1 position-relative">
+        <div class="swiper-wrapper">
+            @foreach (var vn in recommended)
+            {
+                <div class="swiper-slide position-relative vn-card mt-3 col-md-3 col-lg-3 col-6">
+                    <div class="box">
+                        @if (vn.CoverImageLink != null)
+                        {
+                            string coverImageUrl = $"https://2f58d602-2c33-481e-875b-700b4d4b3263.selstorage.ru/" +
+                            $"{vn.CoverImageLink}";
+                            <a asp-controller="Novel" asp-action="Novel" asp-route-linkName="@vn.LinkName" title="@vn.Title"><img loading="lazy" src="@coverImageUrl" class="home_cover_image" /></a>
+                        }
+                        else
+                        {
+                            <img loading="lazy" src="~/images/thumbnail.png" class="home_cover_image">
+                        }
+                        <div class="vn-card-content">
+                            @if (vn.VndbRating != null && vn.VndbVoteCount != null)
+                            {
+                                <p class="vn-card-rating">★ @vn.VndbRating</p>
+                                @* <p>Рейтинг VNDB: @vnr.VisualNovel.VndbRating (@vnr.VisualNovel.VndbVoteCount)</p> *@
+                            }
+                            @if (vn.Title.Length > 44)
+                            {
+                                string shortedTitle = vn.Title.Substring(0, 40) + "...";
+                                <a asp-controller="Novel" asp-action="Novel" asp-route-linkName="@vn.LinkName" title="@vn.Title"><p class="vn-card-title">@shortedTitle</p></a>
+                            }
+                            else
+                            {
+                                <a asp-controller="Novel" asp-action="Novel" asp-route-linkName="@vn.LinkName" title="@vn.Title"><p class="vn-card-title">@vn.Title</p></a>
+                            }
+                        </div>
+                        @*<a class="btn btn-primary" role="button" asp-controller="Novel" asp-action="Novel" asp-route-id="@vnr.VisualNovel.Id" asp-route-spoilerLevel="0">Подробнее</a>*@
+                    </div>
+                </div>
+
+            }
+        </div>
+        <!-- Add Pagination -->
+        @* <div class="swiper-pagination"></div> *@
+
+        <!-- Add Navigation -->
+        <div class="swiper-button-next"></div>
+        <div class="swiper-button-prev"></div>
+    </div>
+
+    @* @await Html.PartialAsync("_VisualNovelPaginationPartial") *@
+</div>
+
+<script src="https://unpkg.com/swiper/swiper-bundle.min.js"></script>
+<script>
+    var swiper_1 = new Swiper('.swiper-main-1', {
+        slidesPerView: 4,
+        spaceBetween: 30,
+        // pagination: {
+        //     el: '.swiper-pagination',
+        //     clickable: true,
+        // },
+        navigation: {
+            nextEl: '.swiper-button-next',
+            prevEl: '.swiper-button-prev',
+        },
+        breakpoints: {
+            1024: {
+                slidesPerView: 4,
+                spaceBetween: 30,
+            },
+            768: {
+                slidesPerView: 3,
+                spaceBetween: 20,
+            },
+            640: {
+                slidesPerView: 2,
+                spaceBetween: 10,
+            },
+            320: {
+                slidesPerView: 2,
+                spaceBetween: 10,
+            }
+        }
+    });
+
+    var swiper_2 = new Swiper('.swiper-main-2', {
+        slidesPerView: 4,
+        spaceBetween: 30,
+        // pagination: {
+        //     el: '.swiper-pagination',
+        //     clickable: true,
+        // },
+        navigation: {
+            nextEl: '.swiper-button-next',
+            prevEl: '.swiper-button-prev',
+        },
+        breakpoints: {
+            1024: {
+                slidesPerView: 4,
+                spaceBetween: 30,
+            },
+            768: {
+                slidesPerView: 3,
+                spaceBetween: 20,
+            },
+            640: {
+                slidesPerView: 2,
+                spaceBetween: 10,
+            },
+            320: {
+                slidesPerView: 2,
+                spaceBetween: 10,
+            }
+        }
+    });
+
+    var swiper_3 = new Swiper('.swiper-main-3', {
+        slidesPerView: 4,
+        spaceBetween: 30,
+        // pagination: {
+        //     el: '.swiper-pagination',
+        //     clickable: true,
+        // },
+        navigation: {
+            nextEl: '.swiper-button-next',
+            prevEl: '.swiper-button-prev',
+        },
+        breakpoints: {
+            1024: {
+                slidesPerView: 4,
+                spaceBetween: 30,
+            },
+            768: {
+                slidesPerView: 3,
+                spaceBetween: 20,
+            },
+            640: {
+                slidesPerView: 2,
+                spaceBetween: 10,
+            },
+            320: {
+                slidesPerView: 2,
+                spaceBetween: 10,
+            }
+        }
+    });
+
+    var swiper_4 = new Swiper('.swiper-main-4', {
+        slidesPerView: 4,
+        spaceBetween: 30,
+        // pagination: {
+        //     el: '.swiper-pagination',
+        //     clickable: true,
+        // },
+        navigation: {
+            nextEl: '.swiper-button-next',
+            prevEl: '.swiper-button-prev',
+        },
+        breakpoints: {
+            1024: {
+                slidesPerView: 4,
+                spaceBetween: 30,
+            },
+            768: {
+                slidesPerView: 3,
+                spaceBetween: 20,
+            },
+            640: {
+                slidesPerView: 2,
+                spaceBetween: 10,
+            },
+            320: {
+                slidesPerView: 2,
+                spaceBetween: 10,
+            }
+        }
+    });
+</script>
+
+<script>
+    // document.addEventListener("DOMContentLoaded", function () {
+    //     document.querySelector(".own-1").ownCarousel({
+    //         itemPerRow: 4,
+    //         itemWidth: 24,
+    //         loop: false,
+    //         nav: true,
+    //         draggable: true,
+    //         responsive: {
+    //             1000: [4, 24],
+    //             800: [3, 33],
+    //             600: [2, 49],
+    //             400: [1, 100]
+    //         },
+    //     });
+    //     responsive();
+
+    //     document.querySelector(".own-2").ownCarousel({
+    //         itemPerRow: 4,
+    //         itemWidth: 24,
+    //         loop: false,
+    //         nav: true,
+    //         draggable: true,
+    //         responsive: {
+    //             1000: [4, 24],
+    //             800: [3, 33],
+    //             600: [2, 49],
+    //             400: [1, 100]
+    //         },
+    //     });
+    //     responsive();
+
+    //     document.querySelector(".own-3").ownCarousel({
+    //         itemPerRow: 4,
+    //         itemWidth: 24,
+    //         loop: false,
+    //         nav: true,
+    //         draggable: true,
+    //         responsive: {
+    //             1000: [4, 24],
+    //             800: [3, 33],
+    //             600: [2, 49],
+    //             400: [1, 100]
+    //         },
+    //     });
+    //     responsive();
+
+    //     document.querySelector(".own-4").ownCarousel({
+    //         itemPerRow: 4,
+    //         itemWidth: 24,
+    //         loop: false,
+    //         nav: true,
+    //         draggable: true,
+    //         responsive: {
+    //             1000: [4, 24],
+    //             800: [3, 33],
+    //             600: [2, 49],
+    //             400: [1, 100]
+    //         },
+    //     });
+    //     responsive();
+    // });
+</script>

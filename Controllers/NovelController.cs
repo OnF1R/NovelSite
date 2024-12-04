@@ -58,6 +58,21 @@ namespace NovelSite.Controllers
             return RedirectToAction("Novel", "Novel", new { linkName = vn.LinkName });
         }
 
+        [Route("Novel/Recommendation")]
+        public async Task<IActionResult> GetRecommendation(int visualNovelId)
+        {
+            var recommended = await HttpQueries.GetVisualNovelRecommendation(visualNovelId);
+
+            if (recommended == null)
+            {
+                return NotFound();
+            }
+
+            ViewBag.Recommendation = recommended;
+
+            return PartialView("_RecommendedVisualNovelsPartial");
+        }
+
         [Route("Novel/{linkName}")]
         public async Task<IActionResult> Novel(string linkName)
         {
@@ -72,6 +87,10 @@ namespace NovelSite.Controllers
             var rating = await HttpQueries.GetVisualNovelRating(vn.Id);
             ViewBag.VnAverageRating = rating.Item1;
             ViewBag.VnRatingCount = rating.Item2;
+
+            var recommended = await HttpQueries.GetVisualNovelRecommendation(vn.Id);
+
+            ViewBag.Recommendation = recommended;
 
             return View();
         }

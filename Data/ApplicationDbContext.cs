@@ -25,6 +25,7 @@ namespace NovelSite.Data
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
+            //optionsBuilder.UseNpgsql("Server=localhost;Port=5432;User Id=postgres;Password=postgres;Database=novelsite;");
             optionsBuilder.UseNpgsql("Server=localhost;Port=5432;User Id=postgres;Password=moloko990;Database=novelsite;");
             //optionsBuilder.UseLazyLoadingProxies();
         }

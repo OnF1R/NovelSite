@@ -7,7 +7,7 @@
 <h1 class="text-center">@ViewData["Title"]</h1>
 
 @* <div class="row"> *@
-<div class="d-flex align-items-center justify-content-center">
+<div class="text-center d-flex align-items-center justify-content-center">
     <form id="registerForm" asp-route-returnUrl="@Model.ReturnUrl" method="post" enctype="multipart/form-data">
         <div asp-validation-summary="ModelOnly" class="text-danger"></div>
         <div class="form-floating m-2">
@@ -34,6 +34,7 @@
             <label asp-for="Input.Avatar"></label>
             <input asp-for="Input.Avatar" class="form-control" type="file" aria-required="false" />
             <span asp-validation-for="Input.Avatar" class="text-danger"></span>
+            <img id="previewAvatar" class="m-2 rounded-profile-image" src="#" alt="" hidden>
         </div>
         <button id="registerSubmit" type="submit" class="w-100 btn btn-lg btn-primary">Регистрация</button>
     </form>
@@ -69,6 +70,22 @@
         </section>
     </div> *@
 @* </div> *@
+
+<script>
+    window.addEventListener('load', function () {
+        document.querySelector('input[name="Input.Avatar"]').addEventListener('change', function () {
+            if (this.files && this.files[0]) {
+                var img = document.getElementById('previewAvatar');
+                img.onload = () => {
+                    URL.revokeObjectURL(img.src);  // no longer needed, free memory
+                }
+
+                img.src = URL.createObjectURL(this.files[0]); // set src to blob url
+                img.hidden = false;
+            }
+        });
+    });
+</script>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
